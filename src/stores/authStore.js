@@ -14,8 +14,14 @@ export const useAuthStore = defineStore('auth', {
             try {
                 const response = await AuthService.login(credentials);
 
-                console.log('Login Response:', response);  // Logujemy pełną odpowiedź
+                // Zapisywanie tokenów do stanu aplikacji i do localStorage
+                this.accessToken = response.data.access_token;
+                this.refreshToken = response.data.refresh_token;
 
+                localStorage.setItem('access_token', response.data.access_token);
+                localStorage.setItem('refresh_token', response.data.refresh_token);
+
+                console.log('Login successful:', response.data);
                 return response.data;
 
             } catch (error) {
@@ -24,32 +30,7 @@ export const useAuthStore = defineStore('auth', {
             }
         },
 
-        async updateUser(userData) {
-            try {
-                const response = await AuthService.updateUser(userData);
-                console.log('Update User Response:', response.data);
-                if (response && response.data) {
-                    this.user = { ...this.user, ...response.data }; // Aktualizacja lokalnych danych użytkownika
-                }
-                return response.data;
-            } catch (error) {
-                console.error('Update user failed:', error);
-                throw error;
-            }
-        },
-
-        async register(userData) {
-            try{
-                const response = await AuthService.register(userData);
-                console.log('Register Response:', response.data);
-                return response.data;
-            } catch (error) {
-                console.error('[DEBUG] Register Error:', error);
-                throw error;
-            }
-        },
-
-        // Odświeżenie tokenu dostępu
+        // Inne akcje, jak updateUser, register, refreshToken, logout
         async refreshToken() {
             try {
                 const response = await AuthService.refresh();
@@ -64,7 +45,6 @@ export const useAuthStore = defineStore('auth', {
             }
         },
 
-        // Wylogowanie użytkownika (czyszczenie tokenów)
         logout() {
             localStorage.removeItem('access_token');
             localStorage.removeItem('refresh_token');

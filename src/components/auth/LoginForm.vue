@@ -10,12 +10,25 @@ const username = ref('');
 const password = ref('');
 
 const handleLogin = async () => {
-  //to zrobić trzeba!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  try {
+    await login({ username: username.value, password: password.value });
+    await router.push('/home'); // Przekierowanie po udanym logowaniu
+  } catch (error) {
+    console.error('Login failed:', error);
+  }
 };
 </script>
 
 <template>
-  <!--trzeba zrobić!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!-->
+    <form @submit.prevent="handleLogin">
+      <label for="username">Username:</label>
+      <input v-model="username" type="text" id="username" required />
+
+      <label for="password">Password:</label>
+      <input v-model="password" type="password" id="password" required />
+
+      <button type="submit">Login</button>
+    </form>
 </template>
 
 <style scoped>

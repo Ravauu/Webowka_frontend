@@ -1,6 +1,13 @@
 import './assets/main.css'
+import { createApp } from 'vue';
+import { createPinia } from 'pinia';
+import App from './App.vue';
+import router from './router';
 
-import { createApp } from 'vue'
-import App from './App.vue'
+const app = createApp(App);
+const pinia = createPinia(); // Utwórz instancję Pinia
 
-createApp(App).mount('#app')
+app.use(pinia); // Użyj Pinia jako magazynu stanu
+app.use(router); // Dodaj router (jeśli go używasz)
+app.mount('#app'); // Zamontuj aplikację
+
