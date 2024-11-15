@@ -4,7 +4,7 @@
 
 <template>
   <footer class="footer">
-    <p>&copy; RizzPysiec.com - All rights reserved.</p>
+    <p>&copy; RafałZachraj.com - All rights reserved.</p>
   </footer>
 </template>
 
