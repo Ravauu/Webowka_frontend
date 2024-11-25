@@ -1,4 +1,4 @@
-import axiosInstance from '../Instances/axiosInstance.js';  // Używamy axiosInstance z interceptorami
+import axiosInstance from '../Instances/axiosInstance.js'; // Używamy axiosInstance z interceptorami
 
 const BASE_URL = import.meta.env.VITE_API_URL;
 
@@ -25,7 +25,7 @@ const AuthService = {
         });
     },
 
-    // register func
+    // Register function
     register: (userData) => {
         console.log('[DEBUG] Registering with user data:', userData);
 
@@ -47,7 +47,7 @@ const AuthService = {
         console.log('[DEBUG] Refreshing token with:', refreshToken);
 
         return axiosInstance.get(`${BASE_URL}/refresh`, {
-            params: { token: refreshToken },  // Dodajemy token w query params
+            params: { token: refreshToken }, // Dodajemy token w query params
             headers: {
                 'Content-Type': 'application/json',
             },
@@ -60,7 +60,32 @@ const AuthService = {
         });
     },
 
-    //update user stats
+    // Pobieranie produktów na podstawie kategorii
+    getProductsByCategory: (category) => {
+        console.log('[DEBUG] Fetching products by category:', category);
+
+        return axiosInstance.get(`${BASE_URL}/products/category/${category}`, {
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        }).then(response => {
+            console.log('[DEBUG] Products by Category Response (before transform):', response.data);
+
+            // Naprawiamy ścieżki w odpowiedzi
+            const transformedData = response.data.map(product => ({
+                ...product,
+                photo_path: product.photo_path.replace(/\\/g, '/')
+            }));
+
+            console.log('[DEBUG] Products by Category Response (after transform):', transformedData);
+            return transformedData;
+        }).catch(error => {
+            console.error('Error fetching products by category:', error);
+            throw error;
+        });
+    },
+
+    // Aktualizacja danych użytkownika
     updateUser: (userData) => {
         console.log('[DEBUG] Updating user profile with data:', userData);
         const accessToken = localStorage.getItem('access_token');

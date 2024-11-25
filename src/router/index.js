@@ -4,7 +4,10 @@ import RegisterView from '../views/register.vue';
 import UpdateUserView from '../views/updateUser.vue';
 import TheWelcome from '../components/TheWelcome.vue';
 import { useAuthStore } from '../stores/authStore';
-//endpointy sklepu zamówień trzeba zroutować!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+// Import the CategoryView
+const CategoryView = () => import('../views/CategoryView.vue');
+
 const routes = [
     { path: '/login', name: 'login', component: LoginView },
     { path: '/register', name: 'register', component: RegisterView },
@@ -14,6 +17,12 @@ const routes = [
         name: 'update-profile',
         component: UpdateUserView,
         meta: { requiresAuth: true }
+    },
+    // New route for categories
+    {
+        path: '/category/:category',
+        name: 'category',
+        component: () => import('../views/CategoryView.vue'),
     },
     { path: '/:pathMatch(.*)*', redirect: '/home' }
 ];
@@ -42,7 +51,7 @@ router.beforeEach(async (to, from, next) => {
         } else {
             next({ name: 'login' });
         }
-    }  else {
+    } else {
         next();
     }
 });

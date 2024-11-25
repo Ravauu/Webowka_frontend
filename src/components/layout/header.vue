@@ -9,22 +9,28 @@ const router = useRouter();
 
 const logout = async () => {
   authStore.logout();
-  await router.push({ name: 'login' });
+  await router.push({name: 'login'});
 };
 
 const isAuthenticated = computed(() => authStore.isAuthenticated);
 
+// Categories array, now links are dynamic
 const categories = [
-  'Warzywa, owoce',
-  'Świeże',
-  'Pieczywo',
-  'Spożywcze',
-  'Mrożonki',
-  'Woda, napoje',
-  'Chemia',
-  'Dzieci',
-  'Zwierzęta'
+  { name: 'Warzywa, owoce', path: 'warzywa_owoce' },
+  { name: 'Świeże', path: 'swieze' },
+  { name: 'Pieczywo', path: 'pieczywo' },
+  { name: 'Spożywcze', path: 'spozywcze' },
+  { name: 'Mrożonki', path: 'mrozonki' },
+  { name: 'Woda, napoje', path: 'woda_napoje' },
+  { name: 'Chemia', path: 'chemia' },
+  { name: 'Dzieci', path: 'dzieci' },
+  { name: 'Zwierzęta', path: 'zwierzeta' },
 ];
+
+
+const navigateToCategory = (path) => {
+  router.push({path: `/category/${path}`});
+};
 </script>
 
 <template>
@@ -38,7 +44,7 @@ const categories = [
       </div>
 
       <div class="logo-container">
-        <img :src="logo" alt="Delikatesy Online Logo" class="logo" />
+        <img :src="logo" alt="Delikatesy Online Logo" class="logo"/>
       </div>
     </div>
 
@@ -48,8 +54,9 @@ const categories = [
             v-for="(category, index) in categories"
             :key="index"
             class="category-link"
+            @click="navigateToCategory(category.path)"
         >
-          {{ category }}
+          {{ category.name }}
         </span>
       </div>
     </nav>
@@ -69,7 +76,7 @@ const categories = [
   background-color: #f2f2f2;
   color: #333;
   font-size: 14px;
-  padding: 30px 0; /* Ustawienia paddingu dla górnego paska */
+  padding: 30px 0;
   width: 100%;
   box-sizing: border-box;
   justify-content: space-between;
@@ -83,8 +90,8 @@ const categories = [
 }
 
 .logo {
-  max-height: 120px; /* Ograniczenie wysokości logo */
-  max-width: 200px;  /* Ustalona szerokość */
+  max-height: 120px;
+  max-width: 200px;
 }
 
 .user-links {
@@ -107,8 +114,8 @@ const categories = [
   background-color: #ffffff;
   border-top: 2px solid #ff6347;
   border-bottom: 2px solid #ff6347;
-  padding: 10px 0; /* Padding dla paska kategorii */
-  margin-top: 10px; /* Dodatkowe przesunięcie */
+  padding: 10px 0;
+  margin-top: 10px;
   width: 100%;
   box-sizing: border-box;
 }
