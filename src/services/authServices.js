@@ -25,7 +25,7 @@ const AuthService = {
         });
     },
 
-    // Register function
+    // Rejestracja nowego użytkownika
     register: (userData) => {
         console.log('[DEBUG] Registering with user data:', userData);
 
@@ -47,7 +47,7 @@ const AuthService = {
         console.log('[DEBUG] Refreshing token with:', refreshToken);
 
         return axiosInstance.get(`${BASE_URL}/refresh`, {
-            params: { token: refreshToken }, // Dodajemy token w query params
+            params: { token: refreshToken },
             headers: {
                 'Content-Type': 'application/json',
             },
@@ -56,50 +56,6 @@ const AuthService = {
             return response;
         }).catch(error => {
             console.error('[DEBUG] Token Refresh Error:', error);
-            throw error;
-        });
-    },
-
-    // Pobieranie produktów na podstawie kategorii
-    getProductsByCategory: (category) => {
-        console.log('[DEBUG] Fetching products by category:', category);
-
-        return axiosInstance.get(`${BASE_URL}/products/category/${category}`, {
-            headers: {
-                'Content-Type': 'application/json',
-            },
-        }).then(response => {
-            console.log('[DEBUG] Products by Category Response (before transform):', response.data);
-
-            // Naprawiamy ścieżki w odpowiedzi
-            const transformedData = response.data.map(product => ({
-                ...product,
-                photo_path: product.photo_path.replace(/\\/g, '/')
-            }));
-
-            console.log('[DEBUG] Products by Category Response (after transform):', transformedData);
-            return transformedData;
-        }).catch(error => {
-            console.error('Error fetching products by category:', error);
-            throw error;
-        });
-    },
-
-    // Aktualizacja danych użytkownika
-    updateUser: (userData) => {
-        console.log('[DEBUG] Updating user profile with data:', userData);
-        const accessToken = localStorage.getItem('access_token');
-
-        return axiosInstance.put(`${BASE_URL}/user/update`, userData, {
-            headers: {
-                Authorization: `Bearer ${accessToken}`,
-                'Content-Type': 'application/json',
-            },
-        }).then(response => {
-            console.log('[DEBUG] Update User Response:', response.data);
-            return response;
-        }).catch(error => {
-            console.error('[DEBUG] Update User Error:', error);
             throw error;
         });
     },
@@ -122,45 +78,6 @@ const AuthService = {
             return response;
         }).catch(error => {
             console.error('[DEBUG] Logout Error:', error);
-            throw error;
-        });
-    },
-
-    // Zmiana hasła użytkownika
-    changePassword: (oldPassword, newPassword) => {
-        console.log('[DEBUG] Changing password');
-        const accessToken = localStorage.getItem('access_token');
-
-        return axiosInstance.post(`${BASE_URL}/user/initiate-password-change`, { old_password: oldPassword, new_password: newPassword }, {
-            headers: {
-                Authorization: `Bearer ${accessToken}`,
-                'Content-Type': 'application/json',
-            },
-        }).then(response => {
-            console.log('[DEBUG] Change Password Response:', response.data);
-            return response;
-        }).catch(error => {
-            console.error('[DEBUG] Change Password Error:', error);
-            throw error;
-        });
-    },
-
-    // Usunięcie konta
-    deleteUser: (password) => {
-        console.log('[DEBUG] Deleting user');
-        const accessToken = localStorage.getItem('access_token');
-
-        return axiosInstance.delete(`${BASE_URL}/user/delete`, {
-            data: { password },
-            headers: {
-                Authorization: `Bearer ${accessToken}`,
-                'Content-Type': 'application/json',
-            },
-        }).then(response => {
-            console.log('[DEBUG] Delete User Response:', response.data);
-            return response;
-        }).catch(error => {
-            console.error('[DEBUG] Delete User Error:', error);
             throw error;
         });
     },

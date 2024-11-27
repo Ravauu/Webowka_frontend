@@ -3,34 +3,41 @@ import { computed } from 'vue';
 import { useAuthStore } from '@/stores/authStore.js';
 import { useRouter } from 'vue-router';
 import logo from '@/assets/images/delikatesyonlinelogo.webp';
+import ShopService from '@/services/ShopService.js';
 
 const authStore = useAuthStore();
 const router = useRouter();
 
 const logout = async () => {
   authStore.logout();
-  await router.push({name: 'login'});
+  await router.push({ name: 'login' });
 };
 
 const isAuthenticated = computed(() => authStore.isAuthenticated);
 
-// Categories array, now links are dynamic
 const categories = [
-  { name: 'Warzywa, owoce', path: 'warzywa_owoce' },
+  { name: 'Warzywa', path: 'warzywo' },
+  { name: 'Owoce', path: 'owoc' },
   { name: 'Świeże', path: 'swieze' },
   { name: 'Pieczywo', path: 'pieczywo' },
   { name: 'Spożywcze', path: 'spozywcze' },
   { name: 'Mrożonki', path: 'mrozonki' },
-  { name: 'Woda, napoje', path: 'woda_napoje' },
+  { name: 'Napoje', path: 'napoje' },
   { name: 'Chemia', path: 'chemia' },
   { name: 'Dzieci', path: 'dzieci' },
   { name: 'Zwierzęta', path: 'zwierzeta' },
 ];
 
-
-const navigateToCategory = (path) => {
-  router.push({path: `/category/${path}`});
+const navigateToCategory = async (path) => {
+  try {
+    console.log('[DEBUG] Navigating to category:', path);
+    await ShopService.getProductsByCategory(path);
+    router.push({ path: `/category/${path}` });
+  } catch (error) {
+    console.error('Error fetching category products:', error);
+  }
 };
+
 </script>
 
 <template>
@@ -44,7 +51,7 @@ const navigateToCategory = (path) => {
       </div>
 
       <div class="logo-container">
-        <img :src="logo" alt="Delikatesy Online Logo" class="logo"/>
+        <img :src="logo" alt="Delikatesy Online Logo" class="logo" />
       </div>
     </div>
 

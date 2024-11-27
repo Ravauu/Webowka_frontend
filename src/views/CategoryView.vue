@@ -1,38 +1,17 @@
 <script setup>
 import { onMounted, ref } from 'vue';
-import AuthService from '@/services/authServices.js';
+import ShopService from '@/services/ShopService.js';
 import { useRoute } from 'vue-router';
 
 const products = ref([]);
 const route = useRoute();
 
-// Mapowanie kategorii na product_prop
-const mapCategoryToProp = {
-  warzywa_owoce: ['warzywo', 'owoc'], // Mieszana kategoria
-  swieze: 'swieze',
-  pieczywo: 'pieczywo',
-  spozywcze: 'spozywcze',
-  mrozonki: 'mrozonki',
-  woda_napoje: 'napoje',
-  chemia: 'chemia',
-  dzieci: 'dzieci',
-  zwierzeta: 'zwierzeta',
-};
-
 onMounted(async () => {
   const category = route.params.category;
-  const productProps = mapCategoryToProp[category];
 
   try {
-    if (Array.isArray(productProps)) {
-      // Jeśli kategoria ma więcej niż jedną wartość
-      const results = await Promise.all(
-          productProps.map((prop) => AuthService.getProductsByCategory(prop))
-      );
-      products.value = results.flat(); // Połącz wyniki z wielu zapytań
-    } else {
-      products.value = await AuthService.getProductsByCategory(productProps);
-    }
+    products.value = await ShopService.getProductsByCategory(category);
+    console.log('[DEBUG] Loaded products for category:', category, products.value);
   } catch (error) {
     console.error('Failed to fetch products:', error);
   }
@@ -65,10 +44,17 @@ onMounted(async () => {
   border: 1px solid #ddd;
   padding: 10px;
   border-radius: 8px;
+  transition: transform 0.2s ease-in-out;
+}
+
+.product-card:hover {
+  transform: scale(1.05);
+  border-color: #ff6347;
 }
 
 .product-image {
   max-width: 100%;
   height: auto;
+  margin-bottom: 10px;
 }
 </style>
