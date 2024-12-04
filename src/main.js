@@ -2,7 +2,7 @@ import './assets/main.css'
 import { createApp } from 'vue';
 import { createPinia } from 'pinia';
 import App from './App.vue';
-import router from './router';
+import router from './router/index.js';  // Określenie pełnej ścieżki do pliku
 
 const app = createApp(App);
 const pinia = createPinia(); // Utwórz instancję Pinia

@@ -34,7 +34,7 @@ onMounted(async () => {
 <style scoped>
 .products-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  grid-template-columns: repeat(6, 1fr); /* 6 produkty w jednej linii */
   gap: 20px;
   margin-top: 20px;
 }
@@ -54,7 +54,7 @@ onMounted(async () => {
 
 .product-image {
   max-width: 100%;
-  height: auto;
+  height: 70%;
   margin-bottom: 10px;
 }
 </style>
