@@ -1,8 +1,10 @@
 <script setup>
 import { onMounted, ref } from 'vue';
-import ShopService from '@/services/ShopService.js';
+import ShopService from '@/services/shopService.js';
 import { useRoute } from 'vue-router';
+import { useCartStore } from '@/stores/cartStore'; // Importujemy cartStore
 
+const cartStore = useCartStore();
 const products = ref([]);
 const route = useRoute();
 
@@ -16,6 +18,13 @@ onMounted(async () => {
     console.error('Failed to fetch products:', error);
   }
 });
+
+// Funkcja do dodawania produktu do koszyka
+const addToCart = (product) => {
+  cartStore.addItem(product);  // Dodaj produkt do store'a
+  localStorage.setItem('cart', JSON.stringify(cartStore.items));  // Zapisz koszyk w localStorage
+  console.log('Produkt dodany do koszyka:', product);
+};
 </script>
 
 <template>
@@ -26,6 +35,7 @@ onMounted(async () => {
         <img :src="product.photo_path" alt="Product image" class="product-image" />
         <h3>{{ product.name }}</h3>
         <p>{{ product.price }} zł</p>
+        <button @click="addToCart(product)">Dodaj do koszyka</button>
       </div>
     </div>
   </div>

@@ -1,5 +1,5 @@
 import { computed } from 'vue';
-import { useShopStore } from '@/stores/ShopStore.js';
+import { useShopStore } from '@/stores/shopStore.js';
 
 export function useShop() {
     const shopStore = useShopStore();

@@ -3,9 +3,11 @@ import { computed } from 'vue';
 import { useAuthStore } from '@/stores/authStore.js';
 import { useRouter } from 'vue-router';
 import logo from '@/assets/images/delikatesyonlinelogo.webp';
-import ShopService from '@/services/ShopService.js';
+import ShopService from '@/services/shopService.js';
+import { useCartStore } from '@/stores/cartStore'; // Dodajemy store do koszyka
 
 const authStore = useAuthStore();
+const cartStore = useCartStore(); // Dostęp do koszyka
 const router = useRouter();
 
 const logout = async () => {
@@ -14,6 +16,7 @@ const logout = async () => {
 };
 
 const isAuthenticated = computed(() => authStore.isAuthenticated);
+const cartItemCount = computed(() => cartStore.itemCount); // Liczba produktów w koszyku
 
 const categories = [
   { name: 'Warzywa', path: 'warzywo' },
@@ -32,7 +35,7 @@ const navigateToCategory = async (path) => {
   try {
     console.log('[DEBUG] Navigating to category:', path);
     await ShopService.getProductsByCategory(path);
-    router.push({ path: `/category/${path}` });
+    router.push({path: `/category/${path}`});
   } catch (error) {
     console.error('Error fetching category products:', error);
   }
@@ -48,10 +51,17 @@ const navigateToCategory = async (path) => {
         <router-link v-if="!isAuthenticated" to="/login" class="info">Zaloguj się</router-link>
         <router-link v-if="!isAuthenticated" to="/register" class="info">Zarejestruj się</router-link>
         <button v-if="isAuthenticated" @click="logout" class="info">Wyloguj się</button>
+        <!-- Przycisk Mój koszyk -->
+        <router-link to="/cart" v-if="isAuthenticated">
+          <button class="cart-btn">
+            Mój koszyk
+            <span v-if="cartItemCount > 0" class="cart-count">{{ cartItemCount }}</span>
+          </button>
+        </router-link>
       </div>
 
       <div class="logo-container">
-        <img :src="logo" alt="Delikatesy Online Logo" class="logo" />
+        <img :src="logo" alt="Delikatesy Online Logo" class="logo"/>
       </div>
     </div>
 
@@ -144,5 +154,26 @@ const navigateToCategory = async (path) => {
 
 .category-link:hover {
   color: #ff6347;
+}
+
+.cart-btn {
+  background-color: #ff6347;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  cursor: pointer;
+  position: relative;
+  margin-left: 20px;
+}
+
+.cart-count {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  background-color: red;
+  color: white;
+  border-radius: 50%;
+  padding: 5px;
+  font-size: 12px;
 }
 </style>

@@ -1,5 +1,5 @@
 import axios from 'axios';
-import AuthService from '../services/authServices.js';  // Import samego AuthService, aby obsłużyć logout
+import AuthService from '../services/authService.js';  // Import samego AuthService, aby obsłużyć logout
 
 const BASE_URL = import.meta.env.VITE_API_URL;
 

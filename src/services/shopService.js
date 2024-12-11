@@ -8,7 +8,7 @@ const ShopService = {
         console.log('[DEBUG] Fetching products by category:', category);
 
         return axiosInstance.get(`${BASE_URL}/products/by-category/`, {
-            params: { category }, // Użyjemy obiektu params
+            params: { category }, // Używamy obiektu params
             headers: {
                 'Content-Type': 'application/json',
             },
@@ -71,31 +71,12 @@ const ShopService = {
         console.log('[DEBUG] Deleting product with ID:', productId);
 
         return axiosInstance.delete(`${BASE_URL}/products/${productId}`)
-            .then(response => {
-                console.log('[DEBUG] Product deleted:', response.data);
-                return response.data;
-            }).catch(error => {
+            .then(response => response.data)
+            .catch(error => {
                 console.error('[DEBUG] Error deleting product:', error);
                 throw error;
             });
-    },
-
-    // Aktualizacja produktu
-    updateProduct: (productId, productData) => {
-        console.log('[DEBUG] Updating product:', productId, productData);
-
-        return axiosInstance.put(`${BASE_URL}/products/${productId}`, productData, {
-            headers: {
-                'Content-Type': 'application/json',
-            },
-        }).then(response => {
-            console.log('[DEBUG] Product updated:', response.data);
-            return response.data;
-        }).catch(error => {
-            console.error('[DEBUG] Error updating product:', error);
-            throw error;
-        });
-    },
+    }
 };
 
 export default ShopService;

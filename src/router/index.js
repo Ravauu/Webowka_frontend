@@ -5,8 +5,9 @@ import UpdateUserView from '../views/updateUser.vue';
 import TheWelcome from '../components/TheWelcome.vue';
 import { useAuthStore } from '../stores/authStore';
 
-// Import the CategoryView
+// Import the CategoryView and CartView
 const CategoryView = () => import('../views/CategoryView.vue');
+const CartView = () => import('../views/CartView.vue');  // Import CartView
 
 const routes = [
     { path: '/login', name: 'login', component: LoginView },
@@ -22,7 +23,14 @@ const routes = [
     {
         path: '/category/:category',
         name: 'category',
-        component: () => import('../views/CategoryView.vue'),
+        component: CategoryView,
+    },
+    // Protected route for CartView
+    {
+        path: '/cart',
+        name: 'cart',
+        component: CartView,
+        meta: { requiresAuth: true }  // Add protection for CartView
     },
     { path: '/:pathMatch(.*)*', redirect: '/home' }
 ];
@@ -39,20 +47,25 @@ router.beforeEach(async (to, from, next) => {
 
     if (to.meta.requiresAuth) {
         if (accessToken) {
-            next();
+            next();  // User is authenticated, allow access
         } else if (refreshToken) {
             try {
                 await authStore.refreshToken();
-                next();
+                next();  // Successfully refreshed, proceed
             } catch (error) {
                 console.error('Token refresh failed, redirecting to login:', error);
-                next({ name: 'login' });
+                next({ name: 'login' });  // Redirect to login if token refresh fails
             }
         } else {
-            next({ name: 'login' });
+            next({ name: 'login' });  // No token, redirect to login
         }
     } else {
-        next();
+        // If not a protected route, check if user is logged in and redirect accordingly
+        if (accessToken && (to.name === 'login' || to.name === 'register')) {
+            next({ name: 'home' });  // Redirect to home if already logged in
+        } else {
+            next();  // Proceed to route
+        }
     }
 });
 
