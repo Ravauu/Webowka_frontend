@@ -1,4 +1,4 @@
-import { defineStore } from 'pinia';
+import {defineStore} from 'pinia';
 import ShopService from '../services/shopService.js';
 
 export const useShopStore = defineStore('shop', {
@@ -12,8 +12,7 @@ export const useShopStore = defineStore('shop', {
         // Pobierz wszystkie produkty
         async fetchProducts(skip = 0, limit = 100, category = null) {
             try {
-                const response = await ShopService.getProducts(skip, limit, category);
-                this.products = response;
+                this.products = await ShopService.getProducts(skip, limit, category);
             } catch (error) {
                 console.error('Fetch products failed:', error);
                 throw error;
@@ -23,8 +22,7 @@ export const useShopStore = defineStore('shop', {
         // Pobierz produkt według ID
         async fetchProductById(productId) {
             try {
-                const response = await ShopService.getProductById(productId);
-                this.product = response;
+                this.product = await ShopService.getProductById(productId);
             } catch (error) {
                 console.error('Fetch product by ID failed:', error);
                 throw error;
@@ -34,8 +32,7 @@ export const useShopStore = defineStore('shop', {
         // Pobierz produkty według kategorii
         async fetchProductsByCategory(category, skip = 0, limit = 100) {
             try {
-                const response = await ShopService.getProductsByCategory(category, skip, limit);
-                this.products = response;
+                this.products = await ShopService.getProductsByCategory(category, skip, limit);
             } catch (error) {
                 console.error('Fetch products by category failed:', error);
                 throw error;

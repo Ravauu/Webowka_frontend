@@ -1,9 +1,10 @@
 import { createRouter, createWebHistory } from 'vue-router';
-import LoginView from '../views/login.vue';
-import RegisterView from '../views/register.vue';
-import UpdateUserView from '../views/updateUser.vue';
+import LoginView from '../views/LoginView.vue';
+import RegisterView from '../views/RegiserView.vue';
+import UpdateUserView from '../views/UpdateUserView.vue';
 import TheWelcome from '../components/TheWelcome.vue';
 import { useAuthStore } from '../stores/authStore';
+import OrderView from "@/views/OrderView.vue";
 
 // Import the CategoryView and CartView
 const CategoryView = () => import('../views/CategoryView.vue');
@@ -32,6 +33,13 @@ const routes = [
         component: CartView,
         meta: { requiresAuth: true }  // Add protection for CartView
     },
+    {
+        path: '/orders',
+        name: 'orders',
+        component: OrderView,
+        meta: {requiresAuth: true}
+    },
+
     { path: '/:pathMatch(.*)*', redirect: '/home' }
 ];
 

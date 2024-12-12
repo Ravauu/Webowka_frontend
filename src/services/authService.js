@@ -44,21 +44,9 @@ const AuthService = {
 
     // Odświeżanie tokenu
     refresh: (refreshToken) => {
-        console.log('[DEBUG] Refreshing token with:', refreshToken);
-
-        return axiosInstance.get(`${BASE_URL}/refresh`, {
-            params: { token: refreshToken },
-            headers: {
-                'Content-Type': 'application/json',
-            },
-        }).then(response => {
-            console.log('[DEBUG] Token Refresh Response:', response.data);
-            return response;
-        }).catch(error => {
-            console.error('[DEBUG] Token Refresh Error:', error);
-            throw error;
-        });
+        return axiosInstance.post(`${BASE_URL}/refresh`, { refresh_token: refreshToken });
     },
+
 
     // Wylogowanie
     logout: () => {

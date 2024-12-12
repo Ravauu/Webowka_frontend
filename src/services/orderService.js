@@ -1,26 +1,38 @@
-import axiosInstance from '../Instances/axiosInstance.js';
+import axiosInstance from '/src/Instances/axiosInstance.js';
 
-const BASE_URL = import.meta.env.VITE_API_URL;
+const orderService = {
+    async createOrder(orderData) {
+        const response = await axiosInstance.post('/orders', orderData);
+        return response.data;
+    },
 
-const OrderService = {
-    // Create a new order
-    createOrder: async (orderData) => {
-        console.log('[DEBUG] Creating order:', orderData);
+    async getOrders() {
+        const response = await axiosInstance.get('/orders');
+        return response.data;
+    },
 
-        return axiosInstance.post(`${BASE_URL}/orders/orders/`, orderData, {
-            headers: {
-                'Content-Type': 'application/json',
-            },
-        })
-            .then(response => {
-                console.log('[DEBUG] Order created:', response.data);
-                return response.data;
-            })
-            .catch(error => {
-                console.error('[DEBUG] Error creating order:', error);
-                throw error;
-            });
-    }
+    async getUserOrders() {
+        const response = await axiosInstance.get('/my-orders');
+        console.log('Response from /my-orders:', response.data); // Log odpowiedzi serwera
+        return response.data;
+    },
+
+    async getOrder(orderId) {
+        console.log(`Fetching order with ID: ${orderId}`);
+        const response = await axiosInstance.get(`/orders/${orderId}`);
+        console.log('Order response data:', response.data);
+        return response.data;
+    },
+
+    async updateOrderStatus(orderId, status) {
+        const response = await axiosInstance.put(`/orders/${orderId}/status`, { order_status: status });
+        return response.data;
+    },
+
+    async deleteOrder(orderId) {
+        const response = await axiosInstance.delete(`/orders/${orderId}`);
+        return response.data;
+    },
 };
 
-export default OrderService;
+export default orderService;

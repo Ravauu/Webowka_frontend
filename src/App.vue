@@ -1,7 +1,16 @@
 <script setup>
-import Header from './components/Layout/header.vue';
-import Footer from './components/Layout/footer.vue';
+import Header from './components/layout/Header.vue';
+import Footer from './components/layout/Footer.vue';
 import { RouterView } from 'vue-router';
+import { useAuthStore } from '@/stores/authStore';
+import { onMounted } from 'vue';
+
+const authStore = useAuthStore();
+
+// Sprawdzenie autoryzacji przy montowaniu aplikacji
+onMounted(() => {
+  authStore.checkAuth();
+});
 </script>
 
 <template>
@@ -35,7 +44,6 @@ main {
 
 header, footer {
   width: 100%;
-  background-color: #333;
   color: #fff;
   padding: 10px 0;
 }
@@ -48,11 +56,9 @@ header .nav {
 header .nav-link {
   color: #fff;
   text-decoration: none;
-  padding: 5px 10px;
 }
 
 header .nav-link:hover {
-  background-color: #555;
   border-radius: 5px;
 }
 </style>

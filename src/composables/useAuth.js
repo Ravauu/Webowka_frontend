@@ -1,14 +1,12 @@
-import { computed } from 'vue';
-import { useAuthStore } from '@/stores/authStore.js';
+import {computed} from 'vue';
+import {useAuthStore} from '@/stores/authStore.js';
 
 export function useAuth() {
     const authStore = useAuthStore();
 
     const login = async (credentials) => {
         try {
-            // Zwracamy dane z logowania
-            const result = await authStore.login(credentials);
-            return result;
+            return await authStore.login(credentials); // Zwraca dane logowania
         } catch (error) {
             throw new Error('Login failed');
         }
@@ -36,12 +34,14 @@ export function useAuth() {
 
     // Zmienna do sprawdzania, czy użytkownik jest zalogowany
     const isAuthenticated = computed(() => authStore.isAuthenticated);
+    const currentUser = computed(() => authStore.user);
 
     return {
         login,
         register,
         updateUser,
         logout,
-        isAuthenticated
+        isAuthenticated,
+        currentUser
     };
 }

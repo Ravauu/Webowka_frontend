@@ -17,18 +17,17 @@ export const useAuthStore = defineStore('auth', {
 
                 console.log("Login Response:", response.data);
 
-                // Jeśli odpowiedź zawiera access_token, zapisujemy go i refresh_token
                 if (response.data && response.data.access_token) {
                     this.accessToken = response.data.access_token;
                     this.refreshToken = response.data.refresh_token;
+                    this.user = response.data.user; // Zapisz dane użytkownika
 
                     localStorage.setItem('access_token', response.data.access_token);
                     localStorage.setItem('refresh_token', response.data.refresh_token);
+                    localStorage.setItem('user', JSON.stringify(response.data.user)); // Zapisz dane użytkownika w localStorage
 
                     this.isAuthenticated = true;
-
-                    // Nie oczekujemy użytkownika, więc pomijamy zapisanie usera
-                    return response.data;  // Zwracamy dane (np. tokeny) z backendu
+                    return response.data;
                 } else {
                     console.error('Login failed: Invalid response data');
                     throw new Error('Invalid response data');
@@ -71,19 +70,16 @@ export const useAuthStore = defineStore('auth', {
             const user = localStorage.getItem('user');
             if (accessToken && user) {
                 this.accessToken = accessToken;
-                this.user = JSON.parse(user);
+                this.user = JSON.parse(user); // Ustaw dane użytkownika
                 this.isAuthenticated = true;
             } else {
                 this.isAuthenticated = false;
             }
-        },
+        }
     },
 
     getters: {
         // Zwraca, czy użytkownik jest zalogowany
         isUserAuthenticated: (state) => state.isAuthenticated,
-
-        // Zwraca dane użytkownika (na razie jest null, bo nie pobieramy usera z backendu)
-        currentUser: (state) => state.user,
     },
 });
