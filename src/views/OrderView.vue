@@ -1,27 +1,53 @@
 <script setup>
 import { ref, computed, onMounted, nextTick } from 'vue';
 import { useOrder } from '@/composables/useOrder';
-import {useOrderStore} from "@/stores/orderStore.js";
+import { useOrderStore } from "@/stores/orderStore.js";
 
-const { userOrders, fetchUserOrders, fetchOrder, deleteOrder, currentOrder, loading, error } = useOrder();
+const { fetchUserOrders, fetchOrder, deleteOrder, currentOrder, loading, error } = useOrder();
+const orderStore = useOrderStore();
+
 const isModalVisible = ref(false);
 const itemsPerPage = 5;
 const currentPage = ref(1);
 
+const productsPerPage = 5; // Liczba produktów na stronę w szczegółach zamówienia
+const currentProductPage = ref(1);
+
+const paginatedProducts = computed(() => {
+  if (!currentOrder || !currentOrder.order_products) return [];
+  const start = (currentProductPage.value - 1) * productsPerPage;
+  const end = start + productsPerPage;
+  return currentOrder.order_products.slice(start, end);
+});
+
+const totalProductPages = computed(() => {
+  if (!currentOrder || !currentOrder.order_products) return 0;
+  return Math.ceil(currentOrder.order_products.length / productsPerPage);
+});
+
+const goToNextProductPage = () => {
+  if (currentProductPage.value < totalProductPages.value) {
+    currentProductPage.value++;
+  }
+};
+
+const goToPrevProductPage = () => {
+  if (currentProductPage.value > 1) {
+    currentProductPage.value--;
+  }
+};
+
+const resetProductPagination = () => {
+  currentProductPage.value = 1;
+};
+
 onMounted(async () => {
-  console.log('Mounted OrderView, checking refresh...');
-  const orderStore = useOrderStore();
-  if (orderStore.shouldRefreshOrders) {
-    console.log('Refreshing orders...');
-    await fetchUserOrders(); // Pobierz zamówienia z backendu
-    orderStore.resetShouldRefreshOrders(); // Resetuj flagę
-  } else {
-    // Załaduj dane z `localStorage` w razie potrzeby
-    const savedState = localStorage.getItem('order-store');
-    if (savedState) {
-      const parsedState = JSON.parse(savedState);
-      orderStore.userOrders = parsedState.userOrders || [];
-    }
+  try {
+    console.log("Fetching user orders...");
+    await fetchUserOrders();
+    console.log("Fetched user orders:", orderStore.userOrders);
+  } catch (err) {
+    console.error("Error fetching user orders:", err);
   }
 });
 
@@ -32,10 +58,9 @@ const removeOrder = async (orderId, status) => {
   }
   if (confirm('Czy na pewno chcesz usunąć to zamówienie?')) {
     try {
-      await deleteOrder(orderId); // Wywołaj metodę usuwania
+      await deleteOrder(orderId);
       alert('Zamówienie zostało pomyślnie usunięte.');
-      await fetchUserOrders(); // Odśwież listę zamówień
-      window.location.reload();
+      await fetchUserOrders();
     } catch (error) {
       console.error('Błąd podczas usuwania zamówienia:', error);
       alert('Wystąpił błąd podczas usuwania zamówienia.');
@@ -47,8 +72,8 @@ const showOrderDetails = async (orderId) => {
   try {
     console.log('Fetching order details for ID:', orderId);
     await fetchOrder(orderId);
+    resetProductPagination();
     await nextTick();
-    console.log('Current Order:', currentOrder);
     isModalVisible.value = true;
   } catch (err) {
     console.error('Nie udało się pobrać szczegółów zamówienia:', err);
@@ -56,17 +81,13 @@ const showOrderDetails = async (orderId) => {
   }
 };
 
-const closeModal = () => {
-  isModalVisible.value = false;
-};
-
 const paginatedOrders = computed(() => {
   const start = (currentPage.value - 1) * itemsPerPage;
   const end = start + itemsPerPage;
-  return userOrders.slice(start, end);
+  return orderStore.userOrders.slice(start, end);
 });
 
-const totalPages = computed(() => Math.ceil(userOrders.length / itemsPerPage));
+const totalPages = computed(() => Math.ceil(orderStore.userOrders.length / itemsPerPage));
 
 const goToNextPage = () => {
   if (currentPage.value < totalPages.value) currentPage.value++;
@@ -82,9 +103,9 @@ const goToPrevPage = () => {
     <h1>Moje Zamówienia</h1>
     <div v-if="loading">Ładowanie zamówień...</div>
     <div v-if="error">{{ error }}</div>
-    <div v-if="!loading && userOrders.length === 0">Brak zamówień do wyświetlenia.</div>
+    <div v-if="!loading && orderStore.userOrders.length === 0">Brak zamówień do wyświetlenia.</div>
 
-    <table v-if="!loading && userOrders.length > 0" class="orders-table">
+    <table v-if="!loading && orderStore.userOrders.length > 0" class="orders-table">
       <thead>
       <tr>
         <th>#</th>
@@ -114,7 +135,7 @@ const goToPrevPage = () => {
       </tbody>
     </table>
 
-    <div class="pagination" v-if="!loading && userOrders.length > itemsPerPage">
+    <div class="pagination" v-if="!loading && orderStore.userOrders.length > itemsPerPage">
       <button @click="goToPrevPage" :disabled="currentPage === 1">Poprzednia</button>
       <span>Strona {{ currentPage }} z {{ totalPages }}</span>
       <button @click="goToNextPage" :disabled="currentPage === totalPages">Następna</button>
@@ -123,17 +144,42 @@ const goToPrevPage = () => {
     <div v-if="isModalVisible" class="modal-overlay" @click.self="closeModal">
       <div class="modal">
         <h2>Szczegóły Zamówienia</h2>
-        <p v-if="loading">Ładowanie szczegółów zamówienia...</p>
-        <div v-if="currentOrder" class="modal">
-          <p><strong>Numer zamówienia:</strong> {{ currentOrder.id }}</p>
-          <p><strong>Data:</strong> {{ new Date(currentOrder.created_at).toLocaleString() }}</p>
-          <p><strong>Status:</strong> {{ currentOrder.status }}</p>
-          <h3>Produkty:</h3>
-          <ul>
-            <li v-for="product in currentOrder.order_products" :key="product.product_id">
-              {{ product.name }} - {{ product.quantity }} x {{ product.price.toFixed(2) }} zł
-            </li>
-          </ul>
+        <p><strong>Numer zamówienia:</strong> {{ currentOrder.id }}</p>
+        <p><strong>Data:</strong> {{ new Date(currentOrder.created_at).toLocaleString() }}</p>
+        <p><strong>Status:</strong> {{ currentOrder.status }}</p>
+        <h3>Produkty:</h3>
+        <table class="product-details">
+          <thead>
+          <tr>
+            <th>Zdjęcie</th>
+            <th>Produkt</th>
+            <th>Ilość</th>
+            <th>Jednostka</th>
+            <th>Cena (szt.)</th>
+            <th>Łączna Cena</th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr v-for="product in paginatedProducts" :key="product.product_id">
+            <td>
+              <img :src="product.photo_path" alt="Zdjęcie produktu" class="product-image" />
+            </td>
+            <td>{{ product.name }}</td>
+            <td>{{ product.quantity }}</td>
+            <td>{{ product.unit_type }}</td>
+            <td>{{ product.price.toFixed(2) }} zł</td>
+            <td>{{ (product.quantity * product.price).toFixed(2) }} zł</td>
+          </tr>
+          </tbody>
+        </table>
+        <div class="pagination" v-if="totalProductPages > 1">
+          <button @click="goToPrevProductPage" :disabled="currentProductPage === 1">
+            Poprzednia
+          </button>
+          <span>Strona {{ currentProductPage }} z {{ totalProductPages }}</span>
+          <button @click="goToNextProductPage" :disabled="currentProductPage === totalProductPages">
+            Następna
+          </button>
         </div>
         <button @click="closeModal" class="close-btn">Zamknij</button>
       </div>
@@ -223,20 +269,102 @@ const goToPrevPage = () => {
 .modal {
   background: white;
   padding: 20px;
-  border-radius: 8px;
-  width: 400px;
+  border-radius: 10px;
+  width: 500px;
+  max-width: 90%;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.modal h2 {
+  margin-bottom: 15px;
+  font-size: 1.5rem;
+  color: #333;
+  text-align: center;
+}
+
+.modal table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+
+.modal th {
+  background-color: #f8f8f8;
+  font-weight: bold;
+  text-align: center;
+  padding: 10px;
+  border-bottom: 1px solid #ddd;
+}
+
+.modal td {
+  text-align: center;
+  padding: 10px;
+  border-bottom: 1px solid #eee;
+}
+
+.product-image {
+  width: 60px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: 5px;
 }
 
 .close-btn {
   background-color: #e74c3c;
   color: white;
   border: none;
-  padding: 5px 10px;
-  border-radius: 4px;
+  padding: 10px 20px;
+  border-radius: 5px;
+  font-size: 0.9rem;
+  margin-top: 20px;
   cursor: pointer;
+  transition: background-color 0.3s ease;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .close-btn:hover {
   background-color: #c0392b;
+}
+
+.modal td:first-child {
+  width: 70px;
+}
+
+.modal td:nth-child(2) {
+  text-align: left;
+}
+
+.modal td:last-child {
+  font-weight: bold;
+}
+
+.product-details {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+}
+
+.product-details th,
+.product-details td {
+  border: 1px solid #ddd;
+  padding: 10px;
+  text-align: center;
+}
+
+.product-details th {
+  background-color: #f9f9f9;
+  font-size: 0.9rem;
+}
+
+.product-details td {
+  font-size: 0.9rem;
+  color: #555;
+}
+
+.product-details .product-image {
+  margin: 0 auto;
 }
 </style>
