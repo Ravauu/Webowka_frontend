@@ -1,22 +1,14 @@
-import {computed} from 'vue';
-import {useAuthStore} from '@/stores/authStore.js';
+import { computed } from 'vue';
+import { useAuthStore } from '@/stores/authStore.js';
 
 export function useAuth() {
     const authStore = useAuthStore();
 
     const login = async (credentials) => {
         try {
-            return await authStore.login(credentials); // Zwraca dane logowania
+            return await authStore.login(credentials);
         } catch (error) {
             throw new Error('Login failed');
-        }
-    };
-
-    const updateUser = async (userData) => {
-        try {
-            return await authStore.updateUser(userData);
-        } catch (error) {
-            throw new Error('Update failed');
         }
     };
 
@@ -32,16 +24,25 @@ export function useAuth() {
         authStore.logout();
     };
 
-    // Zmienna do sprawdzania, czy użytkownik jest zalogowany
     const isAuthenticated = computed(() => authStore.isAuthenticated);
+
+    // Sprawdzanie, czy użytkownik ma rolę admina
+    const isAdmin = computed(() => {
+        console.log('Current user roles:', authStore.user?.roles); // Loguje role użytkownika
+        if (authStore.user && authStore.user.roles) {
+            return authStore.user.roles.includes('admin');
+        }
+        return false;
+    });
+
     const currentUser = computed(() => authStore.user);
 
     return {
         login,
         register,
-        updateUser,
         logout,
         isAuthenticated,
-        currentUser
+        isAdmin,
+        currentUser,
     };
 }

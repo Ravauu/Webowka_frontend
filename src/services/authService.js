@@ -47,7 +47,6 @@ const AuthService = {
         return axiosInstance.post(`${BASE_URL}/refresh`, { refresh_token: refreshToken });
     },
 
-
     // Wylogowanie
     logout: () => {
         console.log('[DEBUG] Logging out');
