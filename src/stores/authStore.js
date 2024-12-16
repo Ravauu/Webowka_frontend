@@ -3,28 +3,25 @@ import AuthService from '../services/authService.js';
 
 export const useAuthStore = defineStore('auth', {
     state: () => ({
-        user: null,  // Na razie user jest null, bo nie pobieramy go z backendu
+        user: JSON.parse(localStorage.getItem('user')) || null,
         accessToken: localStorage.getItem('access_token') || null,
         refreshToken: localStorage.getItem('refresh_token') || null,
-        isAuthenticated: !!localStorage.getItem('access_token'), // Sprawdzamy, czy użytkownik jest zalogowany na podstawie tokenu
+        isAuthenticated: !!localStorage.getItem('access_token'),
     }),
 
     actions: {
-        // Logowanie użytkownika
         async login(credentials) {
             try {
                 const response = await AuthService.login(credentials);
 
-                console.log("Login Response:", response.data);
-
                 if (response.data && response.data.access_token) {
                     this.accessToken = response.data.access_token;
                     this.refreshToken = response.data.refresh_token;
-                    this.user = response.data.user; // Zapisz dane użytkownika
+                    this.user = response.data.user;
 
                     localStorage.setItem('access_token', response.data.access_token);
                     localStorage.setItem('refresh_token', response.data.refresh_token);
-                    localStorage.setItem('user', JSON.stringify(response.data.user)); // Zapisz dane użytkownika w localStorage
+                    localStorage.setItem('user', JSON.stringify(response.data.user));
 
                     this.isAuthenticated = true;
                     return response.data;
@@ -37,23 +34,31 @@ export const useAuthStore = defineStore('auth', {
                 throw error;
             }
         },
+        async register(userData) {
+            try {
+                const response = await AuthService.register(userData);
+                console.log('[DEBUG] Register Response:', response.data);
+                return response.data;
+            } catch (error) {
+                console.error('[DEBUG] Register Error:', error.response?.data || error.message);
+                throw error; // Przekazanie błędu do `useAuth`
+            }
+        },
 
-        // Odświeżenie tokenu
         async refreshToken() {
             try {
                 const response = await AuthService.refresh();
                 if (response && response.data) {
-                    localStorage.setItem('access_token', response.data.access_token || '');
-                    this.accessToken = response.data.access_token || '';
+                    this.accessToken = response.data.access_token;
+                    localStorage.setItem('access_token', response.data.access_token);
                 }
             } catch (error) {
                 console.error('Refresh token failed:', error);
-                this.logout();  // Wylogowanie użytkownika po nieudanej próbie odświeżenia tokenu
+                this.logout();
                 throw error;
             }
         },
 
-        // Wylogowanie użytkownika
         logout() {
             localStorage.removeItem('access_token');
             localStorage.removeItem('refresh_token');
@@ -64,22 +69,20 @@ export const useAuthStore = defineStore('auth', {
             this.isAuthenticated = false;
         },
 
-        // Funkcja do sprawdzania stanu autoryzacji użytkownika
         checkAuth() {
             const accessToken = localStorage.getItem('access_token');
             const user = localStorage.getItem('user');
             if (accessToken && user) {
                 this.accessToken = accessToken;
-                this.user = JSON.parse(user); // Ustaw dane użytkownika
+                this.user = JSON.parse(user);
                 this.isAuthenticated = true;
             } else {
                 this.isAuthenticated = false;
             }
-        }
+        },
     },
 
     getters: {
-        // Zwraca, czy użytkownik jest zalogowany
-        isUserAuthenticated: (state) => state.isAuthenticated,
+        isAdmin: (state) => state.user?.roles?.includes('admin'),
     },
 });

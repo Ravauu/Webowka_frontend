@@ -5,10 +5,11 @@ import UpdateUserView from '../views/UpdateUserView.vue';
 import TheWelcome from '../components/TheWelcome.vue';
 import { useAuthStore } from '../stores/authStore';
 import OrderView from "@/views/OrderView.vue";
+import AdminPanelView from "@/views/AdminPanelView.vue"; // Import Admin Panel View
 
 // Import the CategoryView and CartView
 const CategoryView = () => import('../views/CategoryView.vue');
-const CartView = () => import('../views/CartView.vue');  // Import CartView
+const CartView = () => import('../views/CartView.vue');
 
 const routes = [
     { path: '/login', name: 'login', component: LoginView },
@@ -20,26 +21,29 @@ const routes = [
         component: UpdateUserView,
         meta: { requiresAuth: true }
     },
-    // New route for categories
     {
         path: '/category/:category',
         name: 'category',
         component: CategoryView,
     },
-    // Protected route for CartView
     {
         path: '/cart',
         name: 'cart',
         component: CartView,
-        meta: { requiresAuth: true }  // Add protection for CartView
+        meta: { requiresAuth: true }
     },
     {
         path: '/orders',
         name: 'orders',
         component: OrderView,
-        meta: {requiresAuth: true}
+        meta: { requiresAuth: true }
     },
-
+    {
+        path: '/admin',
+        name: 'admin',
+        component: AdminPanelView,
+        meta: { requiresAuth: true, requiresAdmin: true } // Meta dla admina
+    },
     { path: '/:pathMatch(.*)*', redirect: '/home' }
 ];
 
@@ -55,25 +59,29 @@ router.beforeEach(async (to, from, next) => {
 
     if (to.meta.requiresAuth) {
         if (accessToken) {
-            next();  // User is authenticated, allow access
+            if (to.meta.requiresAdmin && !authStore.isAdmin) {
+                return next({ name: 'home' }); // Brak dostępu, przekierowanie
+            }
+            return next(); // Użytkownik ma dostęp
         } else if (refreshToken) {
             try {
                 await authStore.refreshToken();
-                next();  // Successfully refreshed, proceed
+                if (to.meta.requiresAdmin && !authStore.isAdmin) {
+                    return next({ name: 'home' }); // Brak dostępu po odświeżeniu tokena
+                }
+                return next(); // Sukces
             } catch (error) {
                 console.error('Token refresh failed, redirecting to login:', error);
-                next({ name: 'login' });  // Redirect to login if token refresh fails
+                return next({ name: 'login' });
             }
         } else {
-            next({ name: 'login' });  // No token, redirect to login
+            return next({ name: 'login' }); // Brak tokena, przekierowanie do logowania
         }
     } else {
-        // If not a protected route, check if user is logged in and redirect accordingly
         if (accessToken && (to.name === 'login' || to.name === 'register')) {
-            next({ name: 'home' });  // Redirect to home if already logged in
-        } else {
-            next();  // Proceed to route
+            return next({ name: 'home' });
         }
+        return next();
     }
 });
 

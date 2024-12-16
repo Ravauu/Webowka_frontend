@@ -33,13 +33,15 @@ const AuthService = {
             headers: {
                 'Content-Type': 'application/json',
             },
-        }).then(response => {
-            console.log('[DEBUG] Register Response:', response.data);
-            return response;
-        }).catch(error => {
-            console.error('[DEBUG] Register Error:', error);
-            throw error;
-        });
+        })
+            .then(response => {
+                console.log('[DEBUG] Register Response:', response.data);
+                return response.data;
+            })
+            .catch(error => {
+                console.error('[DEBUG] Register Error:', error.response?.data || error.message);
+                throw error;
+            });
     },
 
     // Odświeżanie tokenu

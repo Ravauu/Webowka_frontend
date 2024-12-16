@@ -9,30 +9,21 @@ const router = useRouter();
 const email = ref('');
 const password = ref('');
 const fullName = ref('');
-
-// Pola adresowe
 const city = ref('');
 const street = ref('');
 const houseNumber = ref('');
 const postalCode = ref('');
 
-// Funkcja formatowania adresu
-const formatAddress = () => {
-  return `${city.value};${street.value};${houseNumber.value};${postalCode.value}`;
-};
-
 const handleRegister = async () => {
   try {
-    // Przygotowanie danych użytkownika
     const userData = {
       email: email.value,
       password: password.value,
       full_name: fullName.value,
-      address: formatAddress(), // Sformatowany adres
+      address: `${city.value};${street.value};${houseNumber.value};${postalCode.value}`,
     };
-
     await register(userData);
-    router.push('/login'); // Przekierowanie po udanej rejestracji
+    await router.push('/login'); // Przekierowanie na login po udanej rejestracji
   } catch (error) {
     console.error('Register failed:', error);
   }
@@ -41,6 +32,8 @@ const handleRegister = async () => {
 
 <template>
   <form @submit.prevent="handleRegister">
+    <h1>Register</h1>
+
     <label for="email">Email:</label>
     <input v-model="email" type="email" id="email" required />
 
@@ -67,13 +60,36 @@ const handleRegister = async () => {
 </template>
 
 <style scoped>
-/* Stylowanie form */
 form {
+  max-width: 400px;
+  margin: 0 auto;
   display: flex;
   flex-direction: column;
+  gap: 10px;
 }
 
-label, input, button {
-  margin-bottom: 10px;
+label {
+  font-weight: bold;
+}
+
+input {
+  padding: 8px;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+button {
+  padding: 10px;
+  font-size: 16px;
+  color: white;
+  background-color: #3498db;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #2980b9;
 }
 </style>
