@@ -96,6 +96,19 @@ const closeModals = () => {
   showUpdateOrderModal.value = false;
   showUpdateProductModal.value = false;
 };
+
+// Funkcja usuwania zamówienia
+const handleDeleteOrder = async (orderId) => {
+  if (confirm('Czy na pewno chcesz usunąć to zamówienie?')) {
+    try {
+      await deleteOrder(orderId);
+      alert('Zamówienie zostało usunięte.');
+    } catch (err) {
+      console.error(err);
+      alert('Nie udało się usunąć zamówienia.');
+    }
+  }
+};
 </script>
 
 <template>
@@ -137,7 +150,7 @@ const closeModals = () => {
           </td>
           <td>
             <button @click="openUpdateOrderModal(order.id)">Edytuj</button>
-            <button @click="deleteOrder(order.id)">Usuń</button>
+            <button @click="handleDeleteOrder(order.id)">Usuń</button>
           </td>
         </tr>
         </tbody>
