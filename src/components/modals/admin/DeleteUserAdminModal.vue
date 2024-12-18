@@ -1,11 +1,11 @@
 <template>
   <div class="modal-overlay">
     <div class="modal">
-      <h3>Usuń Produkt</h3>
-      <p>Czy na pewno chcesz usunąć produkt o ID {{ productId }}?</p>
+      <h3>Usuń Użytkownika</h3>
+      <p>Czy na pewno chcesz usunąć użytkownika o ID {{ userId }}?</p>
       <div class="modal-actions">
         <button @click="$emit('confirm')">Tak, Usuń</button>
-        <button @click="$emit('close')">Anuluj</button>
+        <button @click="$emit('cancel')">Anuluj</button>
       </div>
     </div>
   </div>
@@ -13,13 +13,13 @@
 
 <script setup>
 defineProps({
-  productId: {
+  userId: {
     type: Number,
     required: true,
   },
 });
 
-defineEmits(['confirm', 'close']);
+defineEmits(['confirm', 'cancel']);
 </script>
 
 <style scoped>

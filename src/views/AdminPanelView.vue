@@ -2,6 +2,11 @@
 import { onMounted, ref } from 'vue';
 import { useAdmin } from '@/composables/useAdmin';
 
+// Import modal components
+import UpdateUserAdminModal from "@/modals/admin/UpdateUserAdminModal.vue";
+import DeleteUserAdminModal from "@/modals/admin/DeleteUserAdminModal.vue";
+import DeleteProductAdminModal from "@/components/modals/admin/DeleteProductAdminModal.vue";
+
 const {
   allOrders,
   allUsers,
@@ -14,7 +19,10 @@ const {
   error,
 } = useAdmin();
 
-const selectedTab = ref('orders'); // Przełącznik między zamówieniami i użytkownikami
+const selectedTab = ref('orders');
+const showDeleteUserModal = ref(false);
+const showUpdateUserModal = ref(false);
+const selectedUserId = ref(null);
 
 onMounted(async () => {
   if (selectedTab.value === 'orders') {
@@ -26,11 +34,8 @@ onMounted(async () => {
 
 const handleTabSwitch = async (tab) => {
   selectedTab.value = tab;
-  if (tab === 'orders') {
-    await fetchAllOrders();
-  } else if (tab === 'users') {
-    await fetchAllUsers();
-  }
+  if (tab === 'orders') await fetchAllOrders();
+  else if (tab === 'users') await fetchAllUsers();
 };
 
 const handleUpdateOrderStatus = async (orderId, newStatus) => {
@@ -55,15 +60,29 @@ const handleDeleteOrder = async (orderId) => {
   }
 };
 
-const handleDeleteUser = async (userId) => {
-  if (confirm('Czy na pewno chcesz usunąć tego użytkownika?')) {
-    try {
-      await deleteUser(userId);
-      alert('Użytkownik został usunięty.');
-    } catch (err) {
-      console.error(err);
-      alert('Nie udało się usunąć użytkownika.');
-    }
+const openDeleteUserModal = (userId) => {
+  selectedUserId.value = userId;
+  showDeleteUserModal.value = true;
+};
+
+const openUpdateUserModal = (userId) => {
+  selectedUserId.value = userId;
+  showUpdateUserModal.value = true;
+};
+
+const closeModals = () => {
+  showDeleteUserModal.value = false;
+  showUpdateUserModal.value = false;
+};
+
+const handleDeleteUser = async () => {
+  try {
+    await deleteUser(selectedUserId.value);
+    alert('Użytkownik został usunięty.');
+    closeModals();
+  } catch (err) {
+    console.error(err);
+    alert('Nie udało się usunąć użytkownika.');
   }
 };
 </script>
@@ -79,6 +98,7 @@ const handleDeleteUser = async (userId) => {
     <div v-if="loading">Ładowanie...</div>
     <div v-if="error" class="error">{{ error }}</div>
 
+    <!-- Orders Section -->
     <div v-if="selectedTab === 'orders'">
       <h2>Zamówienia</h2>
       <table>
@@ -96,13 +116,14 @@ const handleDeleteUser = async (userId) => {
           <td>{{ order.id }}</td>
           <td>{{ order.user_id }}</td>
           <td>{{ new Date(order.created_at).toLocaleString() }}</td>
-          <td>{{ order.status }}</td>
           <td>
             <select v-model="order.status" @change="handleUpdateOrderStatus(order.id, order.status)">
               <option value="pending">Pending</option>
               <option value="completed">Completed</option>
               <option value="cancelled">Cancelled</option>
             </select>
+          </td>
+          <td>
             <button @click="handleDeleteOrder(order.id)">Usuń</button>
           </td>
         </tr>
@@ -110,6 +131,7 @@ const handleDeleteUser = async (userId) => {
       </table>
     </div>
 
+    <!-- Users Section -->
     <div v-if="selectedTab === 'users'">
       <h2>Użytkownicy</h2>
       <table>
@@ -127,12 +149,32 @@ const handleDeleteUser = async (userId) => {
           <td>{{ user.email }}</td>
           <td>{{ user.roles.join(', ') }}</td>
           <td>
-            <button @click="handleDeleteUser(user.id)">Usuń</button>
+            <button @click="openUpdateUserModal(user.id)">Edytuj</button>
+            <button @click="openDeleteUserModal(user.id)">Usuń</button>
           </td>
         </tr>
         </tbody>
       </table>
     </div>
+
+    <!-- Modals -->
+    <DeleteUserAdminModal
+        v-if="showDeleteUserModal"
+        :userId="selectedUserId"
+        @confirm="handleDeleteUser"
+        @cancel="closeModals"
+    />
+    <UpdateUserAdminModal
+        v-if="showUpdateUserModal"
+        :userId="selectedUserId"
+        @close="closeModals"
+    />
+    <DeleteProductAdminModal
+        v-if="showDeleteProductModal"
+        :productId="selectedProductId"
+        @confirm="handleDeleteProduct"
+        @close="closeModals"
+    />
   </div>
 </template>
 
@@ -185,6 +227,7 @@ button {
   padding: 5px 10px;
   cursor: pointer;
   border-radius: 4px;
+  margin-right: 5px;
 }
 
 button:hover {
