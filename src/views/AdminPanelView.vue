@@ -3,9 +3,14 @@ import { onMounted, ref } from 'vue';
 import { useAdmin } from '@/composables/useAdmin';
 
 // Import modal components
-import UpdateUserAdminModal from "@/modals/admin/UpdateUserAdminModal.vue";
-import DeleteUserAdminModal from "@/modals/admin/DeleteUserAdminModal.vue";
+import UpdateUserAdminModal from "@/components/modals/admin/UpdateUserAdminModal.vue";
+import DeleteUserAdminModal from "@/components/modals/admin/DeleteUserAdminModal.vue";
 import DeleteProductAdminModal from "@/components/modals/admin/DeleteProductAdminModal.vue";
+import CreateProductAdminModal from "@/components/modals/admin/CreateProductAdminModal.vue";
+import ListAllUsersAdminModal from "@/components/modals/admin/ListAllUsersAdminModal.vue";
+import ListAllOrdersAdminModal from "@/components/modals/admin/ListAllOrdersAdminModal.vue";
+import UpdateOrderAdminModal from "@/components/modals/admin/UpdateOrderAdminModal.vue";
+import UpdateProductAdminModal from "@/components/modals/admin/UpdateProductAdminModal.vue";
 
 const {
   allOrders,
@@ -19,10 +24,21 @@ const {
   error,
 } = useAdmin();
 
+// Zmienne dla modali
 const selectedTab = ref('orders');
 const showDeleteUserModal = ref(false);
 const showUpdateUserModal = ref(false);
+const showCreateProductModal = ref(false);
+const showDeleteProductModal = ref(false);
+const showListUsersModal = ref(false);
+const showListOrdersModal = ref(false);
+const showUpdateOrderModal = ref(false);
+const showUpdateProductModal = ref(false);
+
+// ID dla wybranego elementu
 const selectedUserId = ref(null);
+const selectedProductId = ref(null);
+const selectedOrderId = ref(null);
 
 onMounted(async () => {
   if (selectedTab.value === 'orders') {
@@ -32,34 +48,14 @@ onMounted(async () => {
   }
 });
 
+// Przełączanie zakładek
 const handleTabSwitch = async (tab) => {
   selectedTab.value = tab;
   if (tab === 'orders') await fetchAllOrders();
   else if (tab === 'users') await fetchAllUsers();
 };
 
-const handleUpdateOrderStatus = async (orderId, newStatus) => {
-  try {
-    await updateOrderStatus(orderId, newStatus);
-    alert('Status zamówienia został zaktualizowany.');
-  } catch (err) {
-    console.error(err);
-    alert('Nie udało się zaktualizować statusu zamówienia.');
-  }
-};
-
-const handleDeleteOrder = async (orderId) => {
-  if (confirm('Czy na pewno chcesz usunąć to zamówienie?')) {
-    try {
-      await deleteOrder(orderId);
-      alert('Zamówienie zostało usunięte.');
-    } catch (err) {
-      console.error(err);
-      alert('Nie udało się usunąć zamówienia.');
-    }
-  }
-};
-
+// Funkcje otwierające modale
 const openDeleteUserModal = (userId) => {
   selectedUserId.value = userId;
   showDeleteUserModal.value = true;
@@ -70,20 +66,35 @@ const openUpdateUserModal = (userId) => {
   showUpdateUserModal.value = true;
 };
 
+const openCreateProductModal = () => showCreateProductModal.value = true;
+
+const openDeleteProductModal = (productId) => {
+  selectedProductId.value = productId;
+  showDeleteProductModal.value = true;
+};
+
+const openListUsersModal = () => showListUsersModal.value = true;
+const openListOrdersModal = () => showListOrdersModal.value = true;
+
+const openUpdateOrderModal = (orderId) => {
+  selectedOrderId.value = orderId;
+  showUpdateOrderModal.value = true;
+};
+
+const openUpdateProductModal = (productId) => {
+  selectedProductId.value = productId;
+  showUpdateProductModal.value = true;
+};
+
 const closeModals = () => {
   showDeleteUserModal.value = false;
   showUpdateUserModal.value = false;
-};
-
-const handleDeleteUser = async () => {
-  try {
-    await deleteUser(selectedUserId.value);
-    alert('Użytkownik został usunięty.');
-    closeModals();
-  } catch (err) {
-    console.error(err);
-    alert('Nie udało się usunąć użytkownika.');
-  }
+  showCreateProductModal.value = false;
+  showDeleteProductModal.value = false;
+  showListUsersModal.value = false;
+  showListOrdersModal.value = false;
+  showUpdateOrderModal.value = false;
+  showUpdateProductModal.value = false;
 };
 </script>
 
@@ -101,6 +112,7 @@ const handleDeleteUser = async () => {
     <!-- Orders Section -->
     <div v-if="selectedTab === 'orders'">
       <h2>Zamówienia</h2>
+      <button @click="openListOrdersModal">Wyświetl Wszystkie Zamówienia</button>
       <table>
         <thead>
         <tr>
@@ -117,14 +129,15 @@ const handleDeleteUser = async () => {
           <td>{{ order.user_id }}</td>
           <td>{{ new Date(order.created_at).toLocaleString() }}</td>
           <td>
-            <select v-model="order.status" @change="handleUpdateOrderStatus(order.id, order.status)">
+            <select v-model="order.status" @change="updateOrderStatus(order.id, order.status)">
               <option value="pending">Pending</option>
               <option value="completed">Completed</option>
               <option value="cancelled">Cancelled</option>
             </select>
           </td>
           <td>
-            <button @click="handleDeleteOrder(order.id)">Usuń</button>
+            <button @click="openUpdateOrderModal(order.id)">Edytuj</button>
+            <button @click="deleteOrder(order.id)">Usuń</button>
           </td>
         </tr>
         </tbody>
@@ -134,6 +147,7 @@ const handleDeleteUser = async () => {
     <!-- Users Section -->
     <div v-if="selectedTab === 'users'">
       <h2>Użytkownicy</h2>
+      <button @click="openListUsersModal">Wyświetl Wszystkich Użytkowników</button>
       <table>
         <thead>
         <tr>
@@ -158,23 +172,14 @@ const handleDeleteUser = async () => {
     </div>
 
     <!-- Modals -->
-    <DeleteUserAdminModal
-        v-if="showDeleteUserModal"
-        :userId="selectedUserId"
-        @confirm="handleDeleteUser"
-        @cancel="closeModals"
-    />
-    <UpdateUserAdminModal
-        v-if="showUpdateUserModal"
-        :userId="selectedUserId"
-        @close="closeModals"
-    />
-    <DeleteProductAdminModal
-        v-if="showDeleteProductModal"
-        :productId="selectedProductId"
-        @confirm="handleDeleteProduct"
-        @close="closeModals"
-    />
+    <CreateProductAdminModal v-if="showCreateProductModal" @close="closeModals" />
+    <DeleteProductAdminModal v-if="showDeleteProductModal" :productId="selectedProductId" @close="closeModals" />
+    <ListAllOrdersAdminModal v-if="showListOrdersModal" @close="closeModals" />
+    <ListAllUsersAdminModal v-if="showListUsersModal" @close="closeModals" />
+    <UpdateOrderAdminModal v-if="showUpdateOrderModal" :orderId="selectedOrderId" @close="closeModals" />
+    <UpdateProductAdminModal v-if="showUpdateProductModal" :productId="selectedProductId" @close="closeModals" />
+    <DeleteUserAdminModal v-if="showDeleteUserModal" :userId="selectedUserId" @confirm="deleteUser" @close="closeModals" />
+    <UpdateUserAdminModal v-if="showUpdateUserModal" :userId="selectedUserId" @close="closeModals" />
   </div>
 </template>
 
