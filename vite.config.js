@@ -1,8 +1,12 @@
-import { fileURLToPath, URL } from 'node:url'
-import { defineConfig } from 'vite'
-import vue from '@vitejs/plugin-vue'
-import vueDevTools from 'vite-plugin-vue-devtools'
-import path from 'path' // <-- Dodaj to, aby zaimportować 'path'
+import { fileURLToPath, URL } from 'node:url';
+import { defineConfig } from 'vite';
+import vue from '@vitejs/plugin-vue';
+import vueDevTools from 'vite-plugin-vue-devtools';
+import path from 'path'; // Importujemy 'path'
+import dotenv from 'dotenv'; // Dodano dotenv do obsługi zmiennych środowiskowych
+
+// Wczytujemy zmienne środowiskowe
+dotenv.config();
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -16,11 +20,16 @@ export default defineConfig({
     },
   },
   css: {
-    // Dodajemy wsparcie dla CSS i opcje preprocessora, jeśli chcesz dodać SCSS czy inne preprocessory
+    // Wsparcie dla CSS i opcje preprocessora
     preprocessorOptions: {
       scss: {
-        additionalData: `@import "./src/assets/styles/variables.scss";` // Jeśli masz zmienne SCSS
+        additionalData: `@import "./src/assets/styles/variables.scss";`,
       },
     },
   },
-})
+  define: {
+    'process.env': {
+      VITE_GOOGLE_MAPS_API_KEY: process.env.VITE_GOOGLE_MAPS_API_KEY, // Dodano klucz API z pliku .env
+    },
+  },
+});

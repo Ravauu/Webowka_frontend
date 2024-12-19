@@ -1,28 +1,19 @@
 <script setup>
 import { onMounted, ref } from 'vue';
 import { useAdmin } from '@/composables/useAdmin';
+import orderService from "@/services/orderService";
 
 // Import modal components
 import UpdateUserAdminModal from "@/components/modals/admin/UpdateUserAdminModal.vue";
 import DeleteUserAdminModal from "@/components/modals/admin/DeleteUserAdminModal.vue";
 import DeleteProductAdminModal from "@/components/modals/admin/DeleteProductAdminModal.vue";
 import CreateProductAdminModal from "@/components/modals/admin/CreateProductAdminModal.vue";
-import ListAllUsersAdminModal from "@/components/modals/admin/ListAllUsersAdminModal.vue";
 import ListAllOrdersAdminModal from "@/components/modals/admin/ListAllOrdersAdminModal.vue";
 import UpdateOrderAdminModal from "@/components/modals/admin/UpdateOrderAdminModal.vue";
 import UpdateProductAdminModal from "@/components/modals/admin/UpdateProductAdminModal.vue";
+import ReadOrderDetailsAdminModal from "@/components/modals/admin/ReadOrderDetailsAdminModal.vue";
 
-const {
-  allOrders,
-  allUsers,
-  fetchAllOrders,
-  fetchAllUsers,
-  updateOrderStatus,
-  deleteOrder,
-  deleteUser,
-  loading,
-  error,
-} = useAdmin();
+const { allOrders, allUsers, fetchAllOrders, fetchAllUsers, deleteUser, loading, error } = useAdmin();
 
 // Zmienne dla modali
 const selectedTab = ref('orders');
@@ -30,10 +21,10 @@ const showDeleteUserModal = ref(false);
 const showUpdateUserModal = ref(false);
 const showCreateProductModal = ref(false);
 const showDeleteProductModal = ref(false);
-const showListUsersModal = ref(false);
 const showListOrdersModal = ref(false);
 const showUpdateOrderModal = ref(false);
 const showUpdateProductModal = ref(false);
+const showOrderDetailsModal = ref(false);
 
 // ID dla wybranego elementu
 const selectedUserId = ref(null);
@@ -55,59 +46,49 @@ const handleTabSwitch = async (tab) => {
   else if (tab === 'users') await fetchAllUsers();
 };
 
+// Funkcja do szczegółów zamówienia
+const showOrderDetails = async (orderId) => {
+  try {
+    const orderDetails = await orderService.getOrder(orderId);
+    console.log('Szczegóły zamówienia:', orderDetails);
+    selectedOrderId.value = orderId;
+    showOrderDetailsModal.value = true;
+  } catch (err) {
+    console.error('Nie udało się pobrać szczegółów zamówienia', err);
+  }
+};
+
+// Funkcja do usuwania zamówienia
+const handleDeleteOrder = async (orderId) => {
+  if (confirm('Czy na pewno chcesz usunąć to zamówienie?')) {
+    try {
+      await orderService.deleteOrder(orderId);
+      alert('Zamówienie zostało usunięte.');
+      await fetchAllOrders();
+    } catch (err) {
+      console.error('Nie udało się usunąć zamówienia.', err);
+    }
+  }
+};
+
 // Funkcje otwierające modale
-const openDeleteUserModal = (userId) => {
-  selectedUserId.value = userId;
-  showDeleteUserModal.value = true;
-};
-
-const openUpdateUserModal = (userId) => {
-  selectedUserId.value = userId;
-  showUpdateUserModal.value = true;
-};
-
+const openDeleteUserModal = (userId) => { selectedUserId.value = userId; showDeleteUserModal.value = true; };
+const openUpdateUserModal = (userId) => { selectedUserId.value = userId; showUpdateUserModal.value = true; };
 const openCreateProductModal = () => showCreateProductModal.value = true;
+const openDeleteProductModal = (productId) => { selectedProductId.value = productId; showDeleteProductModal.value = true; };
+const openUpdateOrderModal = (orderId) => { selectedOrderId.value = orderId; showUpdateOrderModal.value = true; };
+const openUpdateProductModal = (productId) => { selectedProductId.value = productId; showUpdateProductModal.value = true; };
 
-const openDeleteProductModal = (productId) => {
-  selectedProductId.value = productId;
-  showDeleteProductModal.value = true;
-};
-
-const openListUsersModal = () => showListUsersModal.value = true;
-const openListOrdersModal = () => showListOrdersModal.value = true;
-
-const openUpdateOrderModal = (orderId) => {
-  selectedOrderId.value = orderId;
-  showUpdateOrderModal.value = true;
-};
-
-const openUpdateProductModal = (productId) => {
-  selectedProductId.value = productId;
-  showUpdateProductModal.value = true;
-};
-
+// Funkcja zamykająca wszystkie modale
 const closeModals = () => {
   showDeleteUserModal.value = false;
   showUpdateUserModal.value = false;
   showCreateProductModal.value = false;
   showDeleteProductModal.value = false;
-  showListUsersModal.value = false;
   showListOrdersModal.value = false;
   showUpdateOrderModal.value = false;
   showUpdateProductModal.value = false;
-};
-
-// Funkcja usuwania zamówienia
-const handleDeleteOrder = async (orderId) => {
-  if (confirm('Czy na pewno chcesz usunąć to zamówienie?')) {
-    try {
-      await deleteOrder(orderId);
-      alert('Zamówienie zostało usunięte.');
-    } catch (err) {
-      console.error(err);
-      alert('Nie udało się usunąć zamówienia.');
-    }
-  }
+  showOrderDetailsModal.value = false;
 };
 </script>
 
@@ -150,6 +131,7 @@ const handleDeleteOrder = async (orderId) => {
           </td>
           <td>
             <button @click="openUpdateOrderModal(order.id)">Edytuj</button>
+            <button @click="showOrderDetails(order.id)">Szczegóły</button>
             <button @click="handleDeleteOrder(order.id)">Usuń</button>
           </td>
         </tr>
@@ -160,13 +142,12 @@ const handleDeleteOrder = async (orderId) => {
     <!-- Users Section -->
     <div v-if="selectedTab === 'users'">
       <h2>Użytkownicy</h2>
-      <button @click="openListUsersModal">Wyświetl Wszystkich Użytkowników</button>
       <table>
         <thead>
         <tr>
           <th>#</th>
           <th>Email</th>
-          <th>Role</th>
+          <th>Adres</th>
           <th>Akcje</th>
         </tr>
         </thead>
@@ -174,7 +155,7 @@ const handleDeleteOrder = async (orderId) => {
         <tr v-for="user in allUsers" :key="user.id">
           <td>{{ user.id }}</td>
           <td>{{ user.email }}</td>
-          <td>{{ user.roles.join(', ') }}</td>
+          <td>{{ user.address || 'Brak adresu' }}</td>
           <td>
             <button @click="openUpdateUserModal(user.id)">Edytuj</button>
             <button @click="openDeleteUserModal(user.id)">Usuń</button>
@@ -187,12 +168,11 @@ const handleDeleteOrder = async (orderId) => {
     <!-- Modals -->
     <CreateProductAdminModal v-if="showCreateProductModal" @close="closeModals" />
     <DeleteProductAdminModal v-if="showDeleteProductModal" :productId="selectedProductId" @close="closeModals" />
-    <ListAllOrdersAdminModal v-if="showListOrdersModal" @close="closeModals" />
-    <ListAllUsersAdminModal v-if="showListUsersModal" @close="closeModals" />
     <UpdateOrderAdminModal v-if="showUpdateOrderModal" :orderId="selectedOrderId" @close="closeModals" />
     <UpdateProductAdminModal v-if="showUpdateProductModal" :productId="selectedProductId" @close="closeModals" />
     <DeleteUserAdminModal v-if="showDeleteUserModal" :userId="selectedUserId" @confirm="deleteUser" @close="closeModals" />
     <UpdateUserAdminModal v-if="showUpdateUserModal" :userId="selectedUserId" @close="closeModals" />
+    <ReadOrderDetailsAdminModal v-if="showOrderDetailsModal" :orderId="selectedOrderId" @close="closeModals" />
   </div>
 </template>
 
