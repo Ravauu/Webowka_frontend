@@ -32,4 +32,17 @@ export default defineConfig({
       VITE_GOOGLE_MAPS_API_KEY: process.env.VITE_GOOGLE_MAPS_API_KEY, // Dodano klucz API z pliku .env
     },
   },
+  server: {
+    port: 5173, // Ustawienie portu
+    proxy: {
+      '/api': {
+        target: 'http://localhost:8000',  // Adres Twojego backendu
+        changeOrigin: true,
+        secure: false,  // Jeśli masz problemy z SSL, możesz ustawić na 'false'
+        pathRewrite: {
+          '^/api': '',  // Zastąp '/api' odpowiednią ścieżką w backendzie
+        },
+      },
+    },
+  },
 });

@@ -69,6 +69,10 @@ const navigateToCategory = async (path) => {
   }
 };
 
+const goToDelivery = () => {
+  router.push('/delivery');
+};
+
 // Wczytaj dane koszyka na początku
 onMounted(() => {
   cartStore.items = JSON.parse(localStorage.getItem('cart')) || [];
@@ -88,26 +92,23 @@ onMounted(() => {
     </div>
 
     <div class="user-links">
-      <span class="info">Kurier</span>
       <router-link v-if="!isAuthenticated" to="/login" class="info">Zaloguj się</router-link>
       <router-link v-if="!isAuthenticated" to="/register" class="info">Zarejestruj się</router-link>
       <button v-if="isAuthenticated" @click="logout" class="info">Wyloguj się</button>
       <router-link v-if="isAuthenticated" to="/orders" class="info">Moje zamówienia</router-link>
-        <div
-            class="cart-container"
-            v-if="isAuthenticated"
-            @mouseenter="isHoveringButton = true"
-            @mouseleave="isHoveringButton = false"
-        >
-
+      <button class="info" @click="goToDelivery">Dostawa</button>
+      <div
+          class="cart-container"
+          v-if="isAuthenticated"
+          @mouseenter="isHoveringButton = true"
+          @mouseleave="isHoveringButton = false"
+      >
         <router-link to="/cart">
           <button class="cart-btn">
             Mój koszyk
             <span v-if="cartItemCount > 0" class="cart-count">{{ cartItemCount }}</span>
           </button>
         </router-link>
-
-
 
         <!-- Modal koszyka -->
         <div
@@ -251,7 +252,7 @@ onMounted(() => {
   z-index: 1000;
   max-height: 300px;
   overflow-y: auto;
-  color:black;
+  color: black;
 }
 
 .cart-modal ul {
@@ -314,4 +315,3 @@ onMounted(() => {
   color: #ff6347;
 }
 </style>
-

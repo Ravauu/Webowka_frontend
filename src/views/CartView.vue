@@ -1,9 +1,10 @@
 <script setup>
-import { computed, ref } from 'vue';
-import { useCartStore } from '@/stores/cartStore';
-import { useAuthStore } from '@/stores/authStore';
-import { useOrderStore } from '@/stores/orderStore'; // Import useOrderStore
-import { useRouter } from 'vue-router';
+import {computed, ref} from 'vue';
+import {useCartStore} from '@/stores/cartStore';
+import {useAuthStore} from '@/stores/authStore';
+import {useOrderStore} from '@/stores/orderStore'; // Import useOrderStore
+import {useRouter} from 'vue-router';
+import axios from 'axios';
 
 const cartStore = useCartStore();
 const authStore = useAuthStore();
@@ -91,16 +92,22 @@ const placeOrder = async () => {
 
     console.log('Order Data:', orderData);
 
-    const order = await orderStore.createOrder(orderData); // Użycie orderStore do składania zamówienia
-    console.log('Zamówienie złożone:', order);
+    // Wysyłanie zapytania do backendu z axios
+    const response = await axios.post('http://localhost:8000/orders', orderData, {
+      headers: {
+        'Authorization': `Bearer ${authStore.accessToken}`, // Jeśli wymagany token
+      }
+    });
+
+    console.log('Zamówienie złożone:', response.data);
 
     alert('Zamówienie złożone pomyślnie!');
     cartStore.clearCart();
 
-    // Ustawiamy flagę w orderStore, aby wymusić odświeżenie
+    // Ustawienie flagi w orderStore
     orderStore.shouldRefreshOrders = true;
 
-    await router.push('/orders'); // Przekierowanie na stronę zamówień
+    await router.push('/orders');
   } catch (error) {
     console.error('Błąd podczas składania zamówienia:', error);
 
