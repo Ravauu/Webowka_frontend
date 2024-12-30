@@ -6,6 +6,7 @@ export default {
       map: null,
       directionsRenderer: null,
       deliveryTime: null, // Czas dostawy
+      deliveryTimeString: null, // Przewidywana godzina dostawy
       senderAddress: "Jastrzębie-Zdrój, ul. Niepodległości 266", // Adres nadawcy
     };
   },
@@ -41,11 +42,10 @@ export default {
 
     async fetchUserAddress() {
       try {
-        // Poprawiono adres endpointa
         const response = await fetch(`${import.meta.env.VITE_API_URL}/user/address`, {
           method: "GET",
           headers: {
-            "Authorization": `Bearer ${localStorage.getItem('access_token')}`,
+            Authorization: `Bearer ${localStorage.getItem("access_token")}`,
             "Content-Type": "application/json",
           },
         });
@@ -71,7 +71,7 @@ export default {
         const response = await fetch(`${import.meta.env.VITE_API_URL}/api/distance-matrix`, {
           method: "POST",
           headers: {
-            "Authorization": `Bearer ${localStorage.getItem('access_token')}`,
+            Authorization: `Bearer ${localStorage.getItem("access_token")}`,
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
@@ -84,7 +84,35 @@ export default {
         if (data.delivery_time) {
           console.log(`Czas dostawy: ${data.delivery_time}`);
           this.deliveryTime = data.delivery_time; // Zapisz czas dostawy
-          this.displayRouteOnMap(this.senderAddress, destination, data.delivery_time);
+
+          // Oblicz przewidywaną godzinę dostawy
+          const now = new Date();
+          const deliveryDuration = data.delivery_time.match(/(\d+)\s*hours?|(\d+)\s*mins?/g);
+          let estimatedDeliveryTime = new Date(now);
+
+          if (deliveryDuration) {
+            deliveryDuration.forEach((duration) => {
+              if (duration.includes("hour")) {
+                const hours = parseInt(duration);
+                estimatedDeliveryTime.setHours(estimatedDeliveryTime.getHours() + hours);
+              } else if (duration.includes("min")) {
+                const minutes = parseInt(duration);
+                estimatedDeliveryTime.setMinutes(estimatedDeliveryTime.getMinutes() + minutes);
+              }
+            });
+          }
+
+          const deliveryTimeString = estimatedDeliveryTime.toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          });
+          console.log(`Przewidywana godzina dostawy: ${deliveryTimeString}`);
+          this.deliveryTimeString = deliveryTimeString; // Zapisz przewidywaną godzinę dostawy
+
+          this.displayRouteOnMap(this.senderAddress, destination, {
+            time: data.delivery_time,
+            estimatedTime: deliveryTimeString,
+          });
         } else {
           console.error("Błąd w odpowiedzi API:", data);
           alert("Nie można obliczyć czasu dostawy.");
@@ -95,7 +123,7 @@ export default {
       }
     },
 
-    displayRouteOnMap(origin, destination, deliveryTime) {
+    displayRouteOnMap(origin, destination, deliveryInfo) {
       const directionsService = new google.maps.DirectionsService();
 
       directionsService.route(
@@ -111,7 +139,10 @@ export default {
               // Dodaj info o czasie dostawy na mapie
               const leg = response.routes[0].legs[0];
               const infoWindow = new google.maps.InfoWindow({
-                content: `<p><strong>Czas dostawy:</strong> ${deliveryTime}</p>`,
+                content: `
+                <p><strong>Czas dostawy:</strong> ${deliveryInfo.time}</p>
+                <p><strong>Przewidywana godzina dostawy:</strong> ${deliveryInfo.estimatedTime}</p>
+              `,
                 position: leg.end_location,
               });
               infoWindow.open(this.map);
@@ -136,7 +167,8 @@ export default {
     <div id="map" style="height: 400px; width: 100%;"></div>
     <button @click="calculateDeliveryRoute">Oblicz trasę dostawy</button>
     <p v-if="deliveryTime" style="margin-top: 10px;">
-      <strong>Szacowany czas dostawy:</strong> {{ deliveryTime }}
+      <strong>Szacowany czas dostawy:</strong> {{ deliveryTime }}<br/>
+      <strong>Przewidywana godzina dostawy:</strong> {{ deliveryTimeString }}
     </p>
   </div>
 </template>
