@@ -1,17 +1,16 @@
 <script setup>
-import {computed, ref} from 'vue';
-import {useCartStore} from '@/stores/cartStore';
-import {useAuthStore} from '@/stores/authStore';
-import {useOrderStore} from '@/stores/orderStore'; // Import useOrderStore
-import {useRouter} from 'vue-router';
+import { computed, ref } from 'vue';
+import { useCartStore } from '@/stores/cartStore';
+import { useAuthStore } from '@/stores/authStore';
+import { useOrderStore } from '@/stores/orderStore';
+import { useRouter } from 'vue-router';
 import axios from 'axios';
 
 const cartStore = useCartStore();
 const authStore = useAuthStore();
-const orderStore = useOrderStore(); // Inicjalizacja orderStore
+const orderStore = useOrderStore();
 const router = useRouter();
 
-// Paginacja
 const currentPage = ref(1);
 const itemsPerPage = 5;
 
@@ -36,7 +35,6 @@ const goToPrevPage = () => {
   }
 };
 
-// Obsługa ilości dla sztuk
 const increaseQuantity = (productId) => {
   const item = cartStore.items.find(i => i.id === productId);
   if (item && item.unit_type === 'szt.') {
@@ -51,7 +49,6 @@ const decreaseQuantity = (productId) => {
   }
 };
 
-// Obsługa ilości dla kilogramów
 const increaseKgQuantity = (productId) => {
   const item = cartStore.items.find(i => i.id === productId);
   if (item && item.unit_type === 'kg') {
@@ -90,23 +87,18 @@ const placeOrder = async () => {
       })),
     };
 
-    console.log('Order Data:', orderData);
-
-    // Wysyłanie zapytania do backendu z axios
     const response = await axios.post('http://localhost:8000/orders', orderData, {
       headers: {
-        'Authorization': `Bearer ${authStore.accessToken}`, // Jeśli wymagany token
+        'Authorization': `Bearer ${authStore.accessToken}`,
       }
     });
 
-    console.log('Zamówienie złożone:', response.data);
+    const { user_address } = response.data;
 
     alert('Zamówienie złożone pomyślnie!');
     cartStore.clearCart();
 
-    // Ustawienie flagi w orderStore
-    orderStore.shouldRefreshOrders = true;
-
+    await calculateDeliveryTime(user_address);  // Wywołanie funkcji do obliczenia czasu dostawy
     await router.push('/orders');
   } catch (error) {
     console.error('Błąd podczas składania zamówienia:', error);
@@ -118,6 +110,45 @@ const placeOrder = async () => {
     } else {
       alert('Wystąpił błąd podczas składania zamówienia. Spróbuj ponownie.');
     }
+  }
+};
+
+const calculateDeliveryTime = async (user_address) => {
+  const senderAddress = "Kraków, ul. Piłsudskiego 10, 31-105 Kraków, Poland"; // Adres nadawcy
+
+  // Dodaj log, aby sprawdzić dane przed wysłaniem
+  console.log("Sending data to API:", {
+    origins: [senderAddress],  // Adres nadawcy jako tablica
+    destinations: [user_address] // Adres użytkownika jako tablica
+  });
+
+  try {
+    const response = await fetch("http://127.0.0.1:8000/api/distance-matrix", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${authStore.accessToken}`
+      },
+      body: JSON.stringify({
+        origins: [senderAddress],  // Adres nadawcy jako tablica
+        destinations: [user_address] // Adres użytkownika jako tablica
+      })
+    });
+
+    const data = await response.json();
+
+    // Dodaj log, aby sprawdzić odpowiedź z API
+    console.log("API response:", data);
+
+    if (data.delivery_time) {
+      alert(`Szacowany czas dostawy: ${data.delivery_time}`);
+    } else {
+      console.error("Błąd w odpowiedzi API:", data);
+      alert("Nie można obliczyć czasu dostawy.");
+    }
+  } catch (error) {
+    console.error("Błąd podczas wywołania API:", error);
+    alert("Wystąpił błąd podczas obliczania czasu dostawy.");
   }
 };
 </script>

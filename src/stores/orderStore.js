@@ -29,10 +29,10 @@ export const useOrderStore = defineStore('order', {
             this.error = null;
             try {
                 const orders = await orderService.getUserOrders();
-                console.log('Fetched orders from API:', orders);
+                console.log('[DEBUG] Fetched User Orders:', orders);
                 this.userOrders = orders; // Przypisanie reaktywne
             } catch (error) {
-                console.error('Error in fetchUserOrders:', error);
+                console.error('[ERROR] Fetch User Orders:', error.response?.data || error.message);
                 this.error = error.message || 'Nie udało się pobrać zamówień użytkownika.';
             } finally {
                 this.loading = false;
