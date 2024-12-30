@@ -4,7 +4,9 @@ export default {
     return {
       googleMapsLoaded: false,
       map: null,
-      senderAddress: "Jastrzębie-Zdrój, ul. Niepodległości 266", // Adres nadawczy
+      directionsRenderer: null,
+      deliveryTime: null, // Czas dostawy
+      senderAddress: "Jastrzębie-Zdrój, ul. Niepodległości 266", // Adres nadawcy
     };
   },
   methods: {
@@ -17,7 +19,6 @@ export default {
       script.src = `https://maps.googleapis.com/maps/api/js?key=${import.meta.env.VITE_GOOGLE_MAPS_API_KEY}&callback=initMap&libraries=places&v=weekly`;
       script.async = true;
       script.defer = true;
-      script.setAttribute("loading", "async");
 
       window.initMap = this.initMap.bind(this);
       document.head.appendChild(script);
@@ -28,49 +29,98 @@ export default {
       this.googleMapsLoaded = true;
 
       this.map = new google.maps.Map(document.getElementById("map"), {
-        center: {lat: 52.2296756, lng: 21.0122287}, // Domyślny punkt (np. Warszawa)
+        center: { lat: 52.2296756, lng: 21.0122287 }, // Domyślny punkt (np. Warszawa)
         zoom: 10,
       });
 
-      const marker = new google.maps.Marker({
-        position: {lat: 52.2296756, lng: 21.0122287},
+      this.directionsRenderer = new google.maps.DirectionsRenderer({
         map: this.map,
-        title: "Twoja dostawa!",
+        suppressMarkers: false, // Wyświetl markery
       });
     },
 
-    async calculateDeliveryTime(destination) {
-      const origin = this.senderAddress; // Adres nadawczy
+    async fetchUserAddress() {
       try {
-        const response = await fetch(
-            `${import.meta.env.VITE_API_URL}/api/distance-matrix`, {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json"
-              },
-              body: JSON.stringify({
-                origins: origin,
-                destinations: destination
-              })
-            }
-        );
+        // Poprawiono adres endpointa
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/user/address`, {
+          method: "GET",
+          headers: {
+            "Authorization": `Bearer ${localStorage.getItem('access_token')}`,
+            "Content-Type": "application/json",
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error("Nie udało się pobrać adresu użytkownika.");
+        }
+
+        const data = await response.json();
+        return data.address; // Zwróć adres użytkownika
+      } catch (error) {
+        console.error("Błąd podczas pobierania adresu użytkownika:", error);
+        alert("Nie udało się pobrać adresu użytkownika.");
+        return null;
+      }
+    },
+
+    async calculateDeliveryRoute() {
+      try {
+        const destination = await this.fetchUserAddress(); // Pobierz adres użytkownika
+        if (!destination) return;
+
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/distance-matrix`, {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${localStorage.getItem('access_token')}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            origins: [this.senderAddress],
+            destinations: [destination],
+          }),
+        });
 
         const data = await response.json();
         if (data.delivery_time) {
-          alert(`Szacowany czas dostawy: ${data.delivery_time}`);
+          console.log(`Czas dostawy: ${data.delivery_time}`);
+          this.deliveryTime = data.delivery_time; // Zapisz czas dostawy
+          this.displayRouteOnMap(this.senderAddress, destination, data.delivery_time);
         } else {
           console.error("Błąd w odpowiedzi API:", data);
           alert("Nie można obliczyć czasu dostawy.");
         }
       } catch (error) {
         console.error("Błąd podczas wywołania API:", error);
-        alert("Wystąpił błąd podczas obliczania czasu dostawy.");
+        alert("Wystąpił błąd podczas obliczania trasy dostawy.");
       }
     },
 
-    async testDeliveryTime() {
-      const destination = "Opole, Polska"; // Adres docelowy
-      this.calculateDeliveryTime(destination);
+    displayRouteOnMap(origin, destination, deliveryTime) {
+      const directionsService = new google.maps.DirectionsService();
+
+      directionsService.route(
+          {
+            origin: origin,
+            destination: destination,
+            travelMode: google.maps.TravelMode.DRIVING,
+          },
+          (response, status) => {
+            if (status === google.maps.DirectionsStatus.OK) {
+              this.directionsRenderer.setDirections(response);
+
+              // Dodaj info o czasie dostawy na mapie
+              const leg = response.routes[0].legs[0];
+              const infoWindow = new google.maps.InfoWindow({
+                content: `<p><strong>Czas dostawy:</strong> ${deliveryTime}</p>`,
+                position: leg.end_location,
+              });
+              infoWindow.open(this.map);
+            } else {
+              console.error("Directions request failed due to " + status);
+              alert("Nie udało się obliczyć trasy na mapie.");
+            }
+          }
+      );
     },
   },
 
@@ -84,7 +134,10 @@ export default {
   <div>
     <h1>Mapa Dostawy</h1>
     <div id="map" style="height: 400px; width: 100%;"></div>
-    <button @click="testDeliveryTime">Testuj czas dostawy</button>
+    <button @click="calculateDeliveryRoute">Oblicz trasę dostawy</button>
+    <p v-if="deliveryTime" style="margin-top: 10px;">
+      <strong>Szacowany czas dostawy:</strong> {{ deliveryTime }}
+    </p>
   </div>
 </template>
 
