@@ -32,30 +32,29 @@ const handleRegister = async () => {
 
 <template>
   <form @submit.prevent="handleRegister">
-    <h1>Register</h1>
 
-    <label for="email">Email:</label>
+    <label for="email">E-mail:</label>
     <input v-model="email" type="email" id="email" required />
 
-    <label for="password">Password:</label>
+    <label for="password">Hasło:</label>
     <input v-model="password" type="password" id="password" required />
 
-    <label for="fullName">Full Name:</label>
+    <label for="fullName">Imię i Nazwisko:</label>
     <input v-model="fullName" type="text" id="fullName" required />
 
-    <label for="city">City:</label>
+    <label for="city">Miasto:</label>
     <input v-model="city" type="text" id="city" required />
 
-    <label for="street">Street:</label>
+    <label for="street">Ulica:</label>
     <input v-model="street" type="text" id="street" required />
 
-    <label for="houseNumber">House Number:</label>
+    <label for="houseNumber">Numer domu/mieszkania:</label>
     <input v-model="houseNumber" type="text" id="houseNumber" required />
 
-    <label for="postalCode">Postal Code:</label>
+    <label for="postalCode">Kod pocztowy:</label>
     <input v-model="postalCode" type="text" id="postalCode" required />
 
-    <button type="submit">Register</button>
+    <button type="submit">Zarejestruj</button>
   </form>
 </template>
 

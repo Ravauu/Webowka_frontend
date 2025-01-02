@@ -1,10 +1,10 @@
 <script setup>
-import RegisterForm from '../components/Auth/RegisterForm.vue';
+import RegisterForm from '../components/auth/RegisterForm.vue';
 </script>
 
 <template>
   <div class="register-container">
-    <h1>Register</h1>
+    <h1>Rejestracja</h1>
     <RegisterForm/>
   </div>
 </template>

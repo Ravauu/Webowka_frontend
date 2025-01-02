@@ -82,52 +82,20 @@ onMounted(() => {
 <template>
   <header class="header">
     <div class="top-bar">
-      <span class="left-text">masz quest, przenies przyciski wszystkie na lewo, a na prawo od tekstu sklep internetowy daj koszyk</span>
-      <div class="logo-container">
-        <router-link to="/">
+      <div class="center-section">
+        <router-link to="/" class="logo-container">
           <img :src="logo" alt="Delikatesy Online Logo" class="logo" />
         </router-link>
-      </div>
-      <span class="right-text">Sklep internetowy</span>
-    </div>
-
-    <div class="user-links">
-      <router-link v-if="!isAuthenticated" to="/login" class="info">Zaloguj się</router-link>
-      <router-link v-if="!isAuthenticated" to="/register" class="info">Zarejestruj się</router-link>
-      <button v-if="isAuthenticated" @click="logout" class="info">Wyloguj się</button>
-      <router-link v-if="isAuthenticated" to="/orders" class="info">Moje zamówienia</router-link>
-      <button class="info" @click="goToDelivery">Dostawa</button>
-      <div
-          class="cart-container"
-          v-if="isAuthenticated"
-          @mouseenter="isHoveringButton = true"
-          @mouseleave="isHoveringButton = false"
-      >
-        <router-link to="/cart">
-          <button class="cart-btn">
-            Mój koszyk
-            <span v-if="cartItemCount > 0" class="cart-count">{{ cartItemCount }}</span>
-          </button>
-        </router-link>
-
-        <!-- Modal koszyka -->
-        <div
-            v-if="shouldShowModal"
-            class="cart-modal"
-            @mouseenter="isHoveringModal = true"
-            @mouseleave="isHoveringModal = false"
-        >
-          <div class="pagination">
-            <button @click="goToPrevPage" :disabled="currentPage === 1">Poprzednia</button>
-            <span>Strona {{ currentPage }} z {{ totalPages }}</span>
-            <button @click="goToNextPage" :disabled="currentPage === totalPages">Następna</button>
-          </div>
-          <h2>Koszyk</h2>
-          <ul>
-            <li v-for="item in paginatedItems" :key="item.id">
-              {{ item.name }} - {{ item.quantity }} x {{ item.price.toFixed(2) }} zł
-            </li>
-          </ul>
+        <span class="shop-name">
+        Kupiec<span class="red-text">24</span>
+        </span>
+        <!-- Przyciski użytkownika -->
+        <div class="user-links">
+          <router-link v-if="!isAuthenticated" to="/login" class="info">Zaloguj się</router-link>
+          <router-link v-if="!isAuthenticated" to="/register" class="info">Zarejestruj się</router-link>
+          <button v-if="isAuthenticated" @click="logout" class="info">Wyloguj się</button>
+          <router-link v-if="isAuthenticated" to="/orders" class="info">Moje zamówienia</router-link>
+          <button class="info" @click="goToDelivery">Dostawa</button>
         </div>
       </div>
     </div>
@@ -155,21 +123,27 @@ onMounted(() => {
 
 .top-bar {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 20px;
   background-color: #f2f2f2;
   padding: 15px 40px;
 }
 
+.center-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
 .logo-container {
-  flex-shrink: 0;
   text-align: center;
 }
 
 .logo {
-  max-height: 120px;
-  max-width: 120px;
+  max-height: 150px;
+  max-width: 150px;
   border-radius: 50%;
   transition: transform 0.3s;
 }
@@ -178,111 +152,35 @@ onMounted(() => {
   transform: scale(1.1);
 }
 
-.left-text,
-.right-text {
-  font-size: 1.5em;
-  font-weight: bold;
-  color: #333;
+.shop-name {
+  text-align: center;
+  margin-bottom: 10px; /* Dystans między nazwą sklepu a przyciskami */
+  font-size: 2.5em; /* Zwiększony rozmiar czcionki */
+  font-weight: bold; /* Pogrubienie tekstu */
+  color: #000; /* Czarny kolor dla "Kupiec" */
 }
 
-.left-text {
-  text-align: left;
-}
-
-.right-text {
-  text-align: right;
+.red-text {
+  color: #ff0000; /* Czerwony kolor dla "24" */
 }
 
 .user-links {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 15px;
-  margin-top: 10px;
+  justify-content: center; /* Wyśrodkowanie */
+  gap: 15px; /* Odstępy między przyciskami */
+  margin-top: 10px; /* Odstęp od nazwy sklepu */
+  margin-bottom: 20px; /* Odstęp od navbara */
 }
 
 .info {
   color: #333;
   text-decoration: none;
   cursor: pointer;
+  font-weight: bold;
 }
 
 .info:hover {
   color: #ff6347;
-}
-
-.cart-container {
-  position: relative;
-}
-
-.cart-btn {
-  background-color: #ff6347;
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  cursor: pointer;
-  position: relative;
-  margin-left: 20px;
-}
-
-.cart-count {
-  position: absolute;
-  top: -10px;
-  right: -10px;
-  background-color: red;
-  color: white;
-  border-radius: 50%;
-  padding: 5px 8px;
-  font-size: 14px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.cart-modal {
-  position: absolute;
-  top: 38px;
-  right: 0;
-  background: white;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  width: 300px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  padding: 15px;
-  z-index: 1000;
-  max-height: 300px;
-  overflow-y: auto;
-  color: black;
-}
-
-.cart-modal ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.cart-modal li {
-  margin: 5px 0;
-}
-
-.pagination {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 10px;
-}
-
-.pagination button {
-  background-color: #ff6347;
-  color: white;
-  border: none;
-  padding: 5px 10px;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.pagination button:disabled {
-  background-color: #ddd;
-  cursor: not-allowed;
 }
 
 .category-bar {
